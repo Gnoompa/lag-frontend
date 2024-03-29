@@ -31,3 +31,29 @@ body {
     text-wrap: balance;
   }
 }
+
+
+:root {
+  --bar-fill: #57e705;
+  --bar-top: #6aff03;
+  --pixel-size: 7;
+}
+
+body {
+  background: #de88ff;
+}
+
+.healthbar {
+  width: calc(38px * var(--pixel-size));
+  margin: 0 auto calc(2px * var(--pixel-size)) auto;
+  display: block;
+}
+
+.healthbar_fill {   
+  fill: var(--bar-fill);
+  transition: width 0.1s ease-in, fill 0.2s linear;
+}
+.healthbar_fill-top {
+  fill: var(--bar-top);
+}
+
