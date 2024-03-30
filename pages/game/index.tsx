@@ -7,24 +7,14 @@ import {
   currentEpochTimeAtom,
   globalScoreAtom,
   scoreAtom,
-} from "../state";
-import { getCurrentEpoch } from "../StateInit";
-import { GAME_STAGES_DURATION } from "../const";
+} from "../../state";
+import { getCurrentEpoch } from "../../StateInit";
+import { GAME_STAGES_DURATION } from "../../const";
 import { useFloatie } from "../../features/useFloatie";
 import { useAtomValue, useSetAtom } from "jotai";
 import atomWithDebounce from "@/atoms/debouncedAtom";
 import { usePrivy } from "@privy-io/react-auth";
 import useArweave from "@/features/useArweave";
-
-export enum GamePhase {
-  ChooseSide,
-  Active,
-}
-
-export enum PlayerSide {
-  Worm,
-  Harvester,
-}
 
 const {
   debouncedValueAtom: debouncedScoreAtom,
@@ -32,6 +22,16 @@ const {
 } = atomWithDebounce(0);
 
 export default function Game() {
+  enum GamePhase {
+    ChooseSide,
+    Active,
+  }
+
+  enum PlayerSide {
+    Worm,
+    Harvester,
+  }
+
   const currentEpoch = useAtomValue(currentEpochAtom);
   const currentEpochTime = useAtomValue(currentEpochTimeAtom);
 
@@ -57,6 +57,7 @@ export default function Game() {
   const updatedScoreDeltaRef = useRef(updatedScoreDelta);
 
   const floatieRef = useFloatie(
+    // @ts-ignore
     (cb) =>
       cb(
         updatedScoreDeltaRef.current > 90
@@ -71,15 +72,16 @@ export default function Game() {
     setGameEpoch(getCurrentEpoch());
   }, []);
 
-  useEffect(() => {
-    console.log(user)
-    ready &&
-      user?.wallet?.address &&
-      ar.auth(user?.wallet?.address, signMessage);
-  }, [ready, user]);
+  // useEffect(() => {
+  //   console.log(user)
+  //   ready &&
+  //     user?.wallet?.address &&
+  //     ar.auth(user?.wallet?.address, signMessage);
+  // }, [ready, user]);
 
   useEffect(() => {
-    chosenSide !== undefined && setPhase(GamePhase.Active);
+    chosenSide !== undefined &&
+      (setPhase(GamePhase.Active), ar.auth(user?.wallet?.address, signMessage));
   }, [chosenSide]);
 
   useEffect(() => {
@@ -87,11 +89,14 @@ export default function Game() {
   }, [isOnSpice]);
 
   useEffect(() => {
-    score &&
-      (setDebouncedScore(score),
-      setGlobalScore(globalScore + score),
-      setPersistedScore(persistedScore + score));
+    score && setDebouncedScore(score);
   }, [score]);
+
+  useEffect(() => {
+    updatedScoreDelta &&
+      (setGlobalScore(globalScore + updatedScoreDelta),
+      setPersistedScore(persistedScore + updatedScoreDelta));
+  }, [updatedScoreDelta]);
 
   useEffect(() => {
     debouncedScore && commitScore(currentEpoch, debouncedScore);
@@ -119,6 +124,7 @@ export default function Game() {
   const tapHarvester = () => {
     Math.random() > 0.9 && setIsOnSpice(true);
 
+    // @ts-ignore
     handleTap(isOnSpice ? 100 : 1, isOnSpice && "heavy");
   };
 
@@ -146,7 +152,7 @@ export default function Game() {
     Telegram.WebApp.HapticFeedback.impactOccurred(
       hapticFeedback || (scoreIncrement > 90 ? "heavy" : "light")
     );
-  };
+  }; 
 
   return (
     <Flex
@@ -220,7 +226,7 @@ export default function Game() {
           <svg
             className="healthbar"
             xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 -0.5 30 9"
+            viewBox="0 -0.5 38 9"
             shapeRendering="crispEdges"
           >
             <path
@@ -233,12 +239,12 @@ export default function Game() {
               <rect
                 className="healthbar_fill"
                 height="3"
-                style={{ width: `${100 - (globalScore || 1) / 1e6}%` }}
+                style={{ width: `${100 - ((globalScore || 1) / 1e5 * 100)}%` }}
               ></rect>
             </svg>
           </svg>
           <Text color={"#222"} marginTop={"-30px"}>
-            {1e6 - globalScore}
+            {1e5 - globalScore}
           </Text>
         </Flex>
       )}

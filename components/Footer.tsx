@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Flex, Text } from "rebass";
-import { scoreAtom, spoiceAtom } from "../app/state";
+import { scoreAtom, spoiceAtom } from "../state";
 import { useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import QRCode from "react-qr-code";

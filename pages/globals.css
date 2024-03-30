@@ -1,7 +1,3 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
@@ -17,6 +13,7 @@
 }
 
 body {
+  margin: 0;
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(
       to bottom,
@@ -26,13 +23,6 @@ body {
     rgb(var(--background-start-rgb));
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-}
-
-
 :root {
   --bar-fill: #57e705;
   --bar-top: #6aff03;
@@ -40,7 +30,7 @@ body {
 }
 
 body {
-  background: #de88ff;
+  background: linear-gradient(#D4C1B0,#FEFCFF);
 }
 
 .healthbar {

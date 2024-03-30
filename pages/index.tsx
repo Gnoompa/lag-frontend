@@ -3,7 +3,7 @@
 import { Button, Flex, Heading, Text } from "rebass/styled-components";
 import { useEffect, useState } from "react";
 import { useAtomValue } from "jotai/react";
-import { currentEpochAtom } from "./state";
+import { currentEpochAtom } from "../state";
 import { useRouter } from "next/navigation";
 
 export default function Page() {

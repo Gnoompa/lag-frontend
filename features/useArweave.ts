@@ -8,13 +8,14 @@ export const ARWEAVE_CONTRACT = "8jyKj8JqddVkshuJPSuP7N3-g2Dxw7uEbJikd64p0iw"
 const SIGN_MSG = "linkedlagarwallet";
 
 export default function useArweave(address: string | undefined, sign: (msg: string) => Promise<string>, autoAuth: boolean = false) {
-    const [ready, setReady] = useState(false)    
+    const [ready, setReady] = useState(false)
 
     useEffect(() => {
         address ? autoAuth && sign && auth(address, sign) : setReady(false)
     }, [address, autoAuth])
 
     const auth = async (address: string, sign: (msg: string) => Promise<string>) =>
+        //@ts-ignore
         address && sign && !_getLinkedArWallet(address) ? WarpFactory.forMainnet().contract(ARWEAVE_CONTRACT).connect(await _getArWallet(address, sign)).writeInteraction({
             function: "auth",
             user: address

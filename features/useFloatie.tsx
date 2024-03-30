@@ -1,3 +1,5 @@
+"use client"
+
 import { useEffect, useRef } from "react";
 
 interface Particle {
@@ -12,6 +14,7 @@ interface Particle {
   top: number;
 }
 
+// @ts-ignore
 var updateFn;
 
 export const useFloatie = (fn: Function, enabled: boolean) => {
@@ -20,6 +23,7 @@ export const useFloatie = (fn: Function, enabled: boolean) => {
   useEffect(() => {
     updateFn = fn;
 
+    // @ts-ignore
     enabled && makeElementCool(ref.current);
   }, [enabled]);
 
@@ -71,6 +75,7 @@ function makeElementCool(element: HTMLElement): () => void {
 
   const container = getContainer();
 
+  // @ts-ignore
   function createParticle(content, styles) {
     const size = sizes[Math.floor(Math.random() * sizes.length)];
     const speedHorz = Math.random() * 10;
@@ -145,6 +150,7 @@ function makeElementCool(element: HTMLElement): () => void {
 
   function loop() {
     if (autoAddParticle && particles.length < limit) {
+      // @ts-ignore
       updateFn(createParticle);
     }
 
