@@ -81,6 +81,7 @@ export default function Game() {
 
   useEffect(() => {
     chosenSide !== undefined &&
+      // @ts-ignore
       (setPhase(GamePhase.Active), ar.auth(user?.wallet?.address, signMessage));
   }, [chosenSide]);
 
@@ -152,7 +153,7 @@ export default function Game() {
     Telegram.WebApp.HapticFeedback.impactOccurred(
       hapticFeedback || (scoreIncrement > 90 ? "heavy" : "light")
     );
-  }; 
+  };
 
   return (
     <Flex
@@ -239,7 +240,7 @@ export default function Game() {
               <rect
                 className="healthbar_fill"
                 height="3"
-                style={{ width: `${100 - ((globalScore || 1) / 1e5 * 100)}%` }}
+                style={{ width: `${100 - ((globalScore || 1) / 1e5) * 100}%` }}
               ></rect>
             </svg>
           </svg>
