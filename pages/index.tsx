@@ -22,9 +22,10 @@ export default function Page() {
       width={"100%"}
       flexDirection={"column"}
       alignItems={"center"}
+      backgroundColor={"var(--lagblack)"}
       height={"100vh"}
     >
-      <img
+      {/* <img
         src={"/sand.png"}
         style={{
           position: "fixed",
@@ -33,8 +34,8 @@ export default function Page() {
           transform: isInited ? "translateY(0)" : "translateY(100vh)",
           transition: ".5s",
         }}
-      ></img>
-      <img
+      ></img> */}
+      {/* <img
         src={"austin.png"}
         style={{
           position: "fixed",
@@ -46,17 +47,17 @@ export default function Page() {
           width: "10rem",
           transition: ".5s",
         }}
-      ></img>
+      ></img> */}
       <img
         src={"lag.png"}
         style={{
           position: "fixed",
-          bottom: "11rem",
-          transform:
-            "rotateZ(-60deg) " +
-            (isInited ? " translateX(0)" : " translateX(100vw)"),
-          right: "-4rem",
-          width: "10rem",
+          bottom: "50%",
+          transform: isInited
+            ? "rotateZ(-60deg) translate(0, 50%)"
+            : "rotateZ(0deg) translate(100vw, 50%)",
+          right: "0",
+          height: "33vh",
           transition: ".5s",
         }}
       ></img>
@@ -64,28 +65,34 @@ export default function Page() {
         flexDirection={"column"}
         alignItems={"center"}
         style={{ position: "relative" }}
-        justifyContent={"space-around"}
+        justifyContent={"space-between"}
         height={"100vh"}
       >
         <Flex flexDirection={"column"} alignItems={"center"}>
-          <Heading fontSize={"5rem"} color={"#111"} fontWeight={"bold"}>
-            $LAG
+          <Heading fontSize={"7rem"} color={"#eaeaea"} fontWeight={"bold"} mt={"5rem"}>
+            LAG
           </Heading>
-          <Text opacity={0.7} color={"#111"} fontSize={"1.5rem"}>
+          {/* <Text opacity={0.7} color={"#111"} fontSize={"1.5rem"}>
             epoch #{currentEpoch}
-          </Text>
+          </Text> */}
         </Flex>
         <Button
           onClick={() => router.push("/game")}
-          backgroundColor={"#4C3827"}
-          p={"2rem 4rem"}
+          backgroundColor={"transparent"}
+          style={{ border: "1px solid #eaeaea" }}
+          p={"3rem 2rem"}
           mb={"5rem"}
         >
           <Text fontSize={"2rem"} fontWeight={900} color={"#fff"}>
-            degENTER
+            DEGENTER
           </Text>
         </Button>
       </Flex>
+      <Flex style={{gap: ".5rem"}} alignItems={"flex-end"}>
+        <Text mb={"1rem"} fontSize={".75rem"}>BY</Text>
+        <Text mb={"1rem"} fontSize={"1.25rem"}>DOUBLETAP.WTF</Text>
+      </Flex>
+      
     </Flex>
   );
 }

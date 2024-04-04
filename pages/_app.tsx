@@ -32,7 +32,7 @@ export default function Providers(props: AppProps) {
       <Head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="color-scheme" content="light dark" />
-        <meta name="theme-color" content="#D4C1B0" />
+        <meta name="theme-color" content="#070606" />
         <title>$LAG</title>
       </Head>
 
@@ -55,7 +55,6 @@ export default function Providers(props: AppProps) {
               <ArweaveProvider>
                 <Component {...pageProps} />
                 <State />
-                <Footer />
               </ArweaveProvider>
             </Provider>
           </WagmiProvider>

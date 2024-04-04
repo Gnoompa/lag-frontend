@@ -2,6 +2,11 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
+  --lagblack: #070606;
+  --lagwhite: #eaeaea;
+  font-family: "KoHo", sans-serif;
+  font-weight: 400;
+  font-style: normal;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -10,6 +15,12 @@
     --background-start-rgb: 0, 0, 0;
     --background-end-rgb: 0, 0, 0;
   }
+}
+
+h1,h2,h3,p,div {
+  font-family: "KoHo", sans-serif !important;
+  font-weight: 400;
+  font-style: normal;
 }
 
 body {
@@ -21,6 +32,11 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
+    
+      font-family: "KoHo", sans-serif;
+      font-weight: 400;
+      font-style: normal;
+    
 }
 
 :root {
@@ -30,7 +46,7 @@ body {
 }
 
 body {
-  background: linear-gradient(#D4C1B0,#FEFCFF);
+  background: #070606;
 }
 
 .healthbar {
@@ -47,3 +63,8 @@ body {
   fill: var(--bar-top);
 }
 
+button {
+  cursor: pointer;
+}
+
+.spinner_9Mto{animation:spinner_5GqJ 1.6s linear infinite;animation-delay:-1.6s}.spinner_bb12{animation-delay:-1s}@keyframes spinner_5GqJ{12.5%{x:13px;y:1px}25%{x:13px;y:1px}37.5%{x:13px;y:13px}50%{x:13px;y:13px}62.5%{x:1px;y:13px}75%{x:1px;y:13px}87.5%{x:1px;y:1px}}
