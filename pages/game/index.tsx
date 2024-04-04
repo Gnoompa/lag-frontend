@@ -87,7 +87,7 @@ export default function Game() {
   }, [isOnSpice]);
 
   useEffect(() => {
-    score && setDebouncedScore(score);
+    score && (setPersistedScore(score), setDebouncedScore(score));
   }, [score]);
 
   useEffect(() => {
@@ -207,6 +207,7 @@ export default function Game() {
       <Image
         src={"/austin.png"}
         width={["50%", "min(100%, 7rem)"]}
+        maxHeight={"30%"}
         style={{
           position: "fixed",
           top: "8rem",
@@ -349,6 +350,7 @@ export default function Game() {
         height={"50%"}
         opacity={isOnSpice ? 1 : 0}
         style={{
+          pointerEvents: "none",
           position: "fixed",
           left: "0",
           top: "5%",

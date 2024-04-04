@@ -66,7 +66,7 @@ export default function Page() {
         alignItems={"center"}
         style={{ position: "relative" }}
         justifyContent={"space-between"}
-        height={"100vh"}
+        height={"calc(100vh - 2rem)"}
       >
         <Flex flexDirection={"column"} alignItems={"center"}>
           <Heading fontSize={"7rem"} color={"#eaeaea"} fontWeight={"bold"} mt={"5rem"}>
@@ -88,11 +88,14 @@ export default function Page() {
           </Text>
         </Button>
       </Flex>
-      <Flex style={{gap: ".5rem"}} alignItems={"flex-end"}>
-        <Text mb={"1rem"} fontSize={".75rem"}>BY</Text>
-        <Text mb={"1rem"} fontSize={"1.25rem"}>DOUBLETAP.WTF</Text>
+      <Flex style={{ gap: ".5rem" }} alignItems={"flex-end"} height={"2rem"}>
+        <Text mb={"1rem"} fontSize={".75rem"}>
+          BY
+        </Text>
+        <Text mb={"1rem"} fontSize={"1.25rem"}>
+          DOUBLETAP.WTF
+        </Text>
       </Flex>
-      
     </Flex>
   );
 }
