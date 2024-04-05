@@ -184,6 +184,7 @@ export default function Game() {
       <Image
         src={"/lag.png"}
         width={["100vw", "min(100%, 15rem)"]}
+        maxWidth={"45vh"}
         style={{
           position: "fixed",
           bottom: "2rem",
@@ -310,27 +311,6 @@ export default function Game() {
           >
             tap worm to eat
           </Text> */}
-        </Flex>
-      )}
-      {phase === GamePhase.Active && (
-        <Flex
-          style={{
-            position: "fixed",
-            bottom: "2.75rem",
-            pointerEvents: "none",
-          }}
-          width={"100%"}
-        >
-          <Flex
-            // backgroundColor={"#4C3827"}
-            p={".5rem"}
-            width={"100%"}
-            justifyContent={"center"}
-          >
-            <Text fontSize={"1.5rem"} fontWeight={900} color="#111">
-              SCORE: {score}
-            </Text>
-          </Flex>
         </Flex>
       )}
 
