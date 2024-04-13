@@ -1,6 +1,8 @@
 export const GENESIS_EPOCH_TIMESTAMP = 1711384626
 export const GAME_STAGES_DURATION = [60, 30, 30]
 
+export const MAX_SCORE_PER_EPOCH = 10_000; // 37 seconds of tapping with CPS of 15
+
 export enum EGameStage {
     Active,
     Commit,

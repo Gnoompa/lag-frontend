@@ -1,38 +1,131 @@
 "use client";
 
-import { Button, Flex, Text } from "rebass";
-import { scoreAtom, spoiceAtom } from "../state";
+import { Box, Button, Flex, Text } from "rebass";
+import { energyAtom, globalScoreAtom, scoreAtom, spoiceAtom } from "../state";
 import { useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import QRCode from "react-qr-code";
 import { useAtomValue } from "jotai";
+import { MAX_SCORE_PER_EPOCH } from "@/const";
+import DojoIcon from "./icons/Dojo";
+import AddIcon from "./icons/Add";
+import InventoryIcon from "./icons/Inventory";
 
 export function Footer() {
-  const { ready, authenticated, login, logout, user } = usePrivy();
+  const { ready, authenticated, login, logout, user, linkWallet } = usePrivy();
 
   const [isExpanded, setIsExpanded] = useState(false);
 
   const spoice = useAtomValue(spoiceAtom);
   const score = useAtomValue(scoreAtom);
+  const globalScore = useAtomValue(globalScoreAtom);
+
+  const energy = useAtomValue(energyAtom);
 
   const wallet = user?.wallet;
 
   return (
     <Flex
-      backgroundColor={"var(--lagblack)"}
       justifyContent={"center"}
       alignItems={"center"}
-      height={"4rem"}
+      height={"5rem"}
+      width={"min(25rem, 90%)"}
+      // maxWidth={"max(90%)"}
       p={".5rem 1rem"}
-      style={{ position: "fixed", bottom: 0, width: "100%" }}
+      style={{
+        position: "fixed",
+        bottom: "1rem",
+        // width: "100%",
+        borderRadius: "20px",
+        border: "1px solid #444",
+        background: "linear-gradient(325deg, rgb(0 0 0 / 30%) 50%, rgb(83 255 216 / 46%) 200%)",
+      }}
     >
-      <Text
-        color="var(--lagwhite)"
-        fontSize={"3rem"}
-        fontWeight={"bold"}
-        style={{ position: "absolute", top: "-4rem", left: "50%", transform: "translateX(-50%)" }}
+      {/* <Flex
+        width={`${(energy / MAX_SCORE_PER_EPOCH) * 100}%`}
+        height={"6px"}
+        backgroundColor={"#fff"}
+        style={{
+          position: "fixed",
+          bottom: "4rem",
+          left: 0,
+          border: "1px solid var(--lagblack)",
+          transition: ".2s",
+        }}
+      /> */}
+      <svg
+        style={{
+          position: "absolute",
+          width: "100%",
+          top: "-16px",
+        }}
+        width="396"
+        height="42"
+        viewBox="0 0 396 42"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        {score}
+        <g filter="url(#filter0_b_389_687)">
+          <path
+            d="M28 6C12.536 6 0 18.536 0 34V42C0 26.536 12.536 14 28 14H368C383.464 14 396 26.536 396 42V34C396 18.536 383.464 6 368 6H28Z"
+            fill="url(#paint0_linear_389_687)"
+          />
+        </g>
+        <path
+          d="M200.095 10.9253L202.203 11.48L193.546 22.7638L195.305 14.5572L195.421 14.0164L194.938 13.7459L192.874 12.5878L196.005 0.75H202.929L199.582 9.94341L199.3 10.7161L200.095 10.9253Z"
+          fill="#111111"
+          stroke="#6EFEC2"
+          stroke-width="1.5"
+        />
+        <defs>
+          <filter
+            id="filter0_b_389_687"
+            x="-16.6"
+            y="-10.6"
+            width="429.2"
+            height="69.2"
+            filterUnits="userSpaceOnUse"
+            color-interpolation-filters="sRGB"
+          >
+            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feGaussianBlur in="BackgroundImageFix" stdDeviation="8.3" />
+            <feComposite in2="SourceAlpha" operator="in" result="effect1_backgroundBlur_389_687" />
+            <feBlend
+              mode="normal"
+              in="SourceGraphic"
+              in2="effect1_backgroundBlur_389_687"
+              result="shape"
+            />
+          </filter>
+          <linearGradient
+            id="paint0_linear_389_687"
+            x1="0"
+            y1="24"
+            x2="396"
+            y2="24"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop offset={energy / MAX_SCORE_PER_EPOCH} stop-color="#6EFEC2" />
+            <stop offset="0" stop-color="#429874" stop-opacity="0.6" />
+          </linearGradient>
+        </defs>
+      </svg>
+
+      <Text
+        fontWeight={700}
+        fontSize={"2rem"}
+        style={{
+          pointerEvents: "none",
+          position: "absolute",
+          top: "-4rem",
+          left: "50%",
+          transform: "translateX(-50%)",
+          background: "linear-gradient(#53FFD8, #02B1AA)",
+          backgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+        }}
+      >
+        {globalScore}
       </Text>
       {ready ? (
         authenticated ? (
@@ -85,6 +178,14 @@ export function Footer() {
                   >
                     aaight
                   </Button>
+                  <Button
+                    onClick={linkWallet}
+                    backgroundColor={"transparent"}
+                    style={{ border: "1px solid #eaeaea" }}
+                    p={"3rem 2rem"}
+                  >
+                    link
+                  </Button>
                   <svg
                     onClick={() => (setIsExpanded(false), logout())}
                     xmlns="http://www.w3.org/2000/svg"
@@ -108,28 +209,65 @@ export function Footer() {
                 </Flex>
               </Flex>
             ) : (
-              <Flex width={"100%"} justifyContent={"space-around"}>
-                <Button
-                  backgroundColor={"transparent"}
-                  p={".25rem 3rem"}
-                  disabled={!ready}
-                  // onClick={ready && authenticated ? () => setIsExpanded(true) : login}
-                >
-                  <Flex flexDirection={"column"} alignItems={"center"}>
-                    <Text fontSize={"2rem"}>{ready ? "⚔️" : "⏱"}</Text>
+              <Box
+                width={"100%"}
+                display={"grid"}
+                style={{ gridTemplateColumns: "repeat(3, 1fr)" }}
+              >
+                <Button bg={"transparent"}>
+                  <Flex flexDirection={"column"} alignItems={"center"} style={{ gap: ".25rem" }}>
+                    <DojoIcon />
+                    <Text
+                      style={{
+                        fontWeight: 500,
+                        background: "linear-gradient(#53FFD8, #02B1AA)",
+                        fontSize: ".75rem",
+                        backgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                      }}
+                    >
+                      DOJO
+                    </Text>
+                  </Flex>
+                </Button>
+                {/* <hr color="#fff" style={{opacity: .3}} /> */}
+                <Button bg={"transparent"}>
+                  <Flex flexDirection={"column"} alignItems={"center"} style={{ gap: ".25rem" }}>
+                    <AddIcon />
+                    <Text
+                      style={{
+                        fontWeight: 500,
+                        background: "linear-gradient(#53FFD8, #02B1AA)",
+                        backgroundClip: "text",
+                        fontSize: ".75rem",
+                        WebkitTextFillColor: "transparent",
+                      }}
+                    >
+                      INVITE
+                    </Text>
                   </Flex>
                 </Button>
                 <Button
-                  backgroundColor={"transparent"}
-                  p={".25rem 3rem"}
+                  bg={"transparent"}
                   disabled={!ready}
-                  // onClick={ready && authenticated ? () => setIsExpanded(true) : login}
+                  onClick={ready && authenticated ? () => setIsExpanded(true) : login}
                 >
-                  <Flex flexDirection={"column"} alignItems={"center"}>
-                    <Text fontSize={"2rem"}>{ready ? "🌟" : "⏱"}</Text>
+                  <Flex flexDirection={"column"} alignItems={"center"} style={{ gap: ".25rem" }}>
+                    <InventoryIcon />
+                    <Text
+                      style={{
+                        fontWeight: 500,
+                        background: "linear-gradient(#53FFD8, #02B1AA)",
+                        backgroundClip: "text",
+                        fontSize: ".75rem",
+                        WebkitTextFillColor: "transparent",
+                      }}
+                    >
+                      INVENTORY
+                    </Text>
                   </Flex>
                 </Button>
-                <Button
+                {/* <Button
                   backgroundColor={"transparent"}
                   p={".25rem 3rem"}
                   disabled={!ready}
@@ -138,8 +276,8 @@ export function Footer() {
                   <Flex flexDirection={"column"} alignItems={"center"}>
                     <Text fontSize={"2rem"}>{ready ? "💰" : "⏱"}</Text>
                   </Flex>
-                </Button>
-              </Flex>
+                </Button> */}
+              </Box>
             )}
           </Flex>
         ) : (

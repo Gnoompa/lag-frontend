@@ -25,13 +25,8 @@ h1,h2,h3,p,div {
 
 body {
   margin: 0;
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  /* color: rgb(var(--foreground-rgb)); */
+ background: url('/bg.png') 0 0 / cover no-repeat;
     
       font-family: "KoHo", sans-serif;
       font-weight: 400;
@@ -45,9 +40,9 @@ body {
   --pixel-size: 7;
 }
 
-body {
+/* body {
   background: #070606;
-}
+} */
 
 .healthbar {
   width: calc(38px * var(--pixel-size));
@@ -65,6 +60,11 @@ body {
 
 button {
   cursor: pointer;
+  transition: .2s;
+}
+
+.primaryButton:hover {
+  opacity: .7;
 }
 
 .spinner_9Mto{animation:spinner_5GqJ 1.6s linear infinite;animation-delay:-1.6s}.spinner_bb12{animation-delay:-1s}@keyframes spinner_5GqJ{12.5%{x:13px;y:1px}25%{x:13px;y:1px}37.5%{x:13px;y:13px}50%{x:13px;y:13px}62.5%{x:1px;y:13px}75%{x:1px;y:13px}87.5%{x:1px;y:1px}}

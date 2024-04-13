@@ -1,10 +1,12 @@
 "use client";
 
-import { Button, Flex, Heading, Text } from "rebass/styled-components";
+import { Box, Button, Flex, Text } from "rebass/styled-components";
 import { useEffect, useState } from "react";
 import { useAtomValue } from "jotai/react";
 import { currentEpochAtom } from "../state";
 import { useRouter } from "next/navigation";
+import Title from "@/components/Title";
+import PrimaryButton from "@/components/PrimaryButton";
 
 export default function Page() {
   const currentEpoch = useAtomValue(currentEpochAtom);
@@ -22,7 +24,8 @@ export default function Page() {
       width={"100%"}
       flexDirection={"column"}
       alignItems={"center"}
-      backgroundColor={"var(--lagblack)"}
+      // backgroundColor={"var(--lagblack)"}
+      padding={"1rem"}
       height={"100vh"}
     >
       {/* <img
@@ -48,7 +51,7 @@ export default function Page() {
           transition: ".5s",
         }}
       ></img> */}
-      <img
+      {/* <img
         src={"lag.png"}
         style={{
           position: "fixed",
@@ -60,41 +63,37 @@ export default function Page() {
           height: "33vh",
           transition: ".5s",
         }}
-      ></img>
+      ></img> */}
       <Flex
         flexDirection={"column"}
         alignItems={"center"}
-        style={{ position: "relative" }}
-        justifyContent={"space-between"}
-        height={"calc(100vh - 2rem)"}
+        style={{
+          position: "relative",
+          borderRadius: "10px",
+          border: "1px solid #1c3630",
+          background: "linear-gradient(325deg, rgb(0 0 0 / 30%) 50%, rgb(83 255 216 / 46%) 200%)",
+        }}
+        justifyContent={"space-around"}
+        height={"100%"}
+        width={"100%"}
+        p={"0 2rem"}
       >
-        <Flex flexDirection={"column"} alignItems={"center"}>
-          <Heading fontSize={"7rem"} color={"#eaeaea"} fontWeight={"bold"} mt={"5rem"}>
-            LAG
-          </Heading>
-          {/* <Text opacity={0.7} color={"#111"} fontSize={"1.5rem"}>
-            epoch #{currentEpoch}
-          </Text> */}
+        <Flex flex={0.6} alignItems={"center"}>
+          <Title />
         </Flex>
+
         <Button
           onClick={() => router.push("/game")}
-          backgroundColor={"transparent"}
-          style={{ border: "1px solid #eaeaea" }}
-          p={"3rem 2rem"}
-          mb={"5rem"}
+          bg={"transparent"}
+          className="primaryButton"
+          flex={0.2}
         >
-          <Text fontSize={"2rem"} fontWeight={900} color={"#fff"}>
-            DEGENTER
-          </Text>
+          <PrimaryButton>ENTER</PrimaryButton>
         </Button>
-      </Flex>
-      <Flex style={{ gap: ".5rem" }} alignItems={"flex-end"} height={"2rem"}>
-        <Text mb={"1rem"} fontSize={".75rem"}>
-          BY
-        </Text>
-        <Text mb={"1rem"} fontSize={"1.25rem"}>
-          DOUBLETAP.WTF
-        </Text>
+        <Flex style={{ gap: ".5rem" }} alignItems={"flex-end"} opacity={0.5} flex={0.1}>
+          <Text fontSize={[".5rem", ".75rem"]}>BY</Text>
+          <Text fontSize={["1rem", "1.25rem"]}>DOUBLETAP.WTF</Text>
+        </Flex>
       </Flex>
     </Flex>
   );
