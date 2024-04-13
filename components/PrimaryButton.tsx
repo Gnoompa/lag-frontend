@@ -1,3 +1,4 @@
+// @ts-ignore
 export default function PrimaryButton({ children }) {
   return (
     <svg width="178" height="85" viewBox="0 0 178 85" xmlns="http://www.w3.org/2000/svg">
