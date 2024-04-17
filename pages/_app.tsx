@@ -43,8 +43,9 @@ export default function Providers(props: AppProps) {
         config={{
           supportedChains: [mantle],
           defaultChain: mantle,
+          loginMethods: ['email'],
           appearance: {
-            theme: "dark",
+            theme: "#004339",
             accentColor: "#676FFF",
           },
         }}

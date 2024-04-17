@@ -17,6 +17,9 @@ export default function Page() {
 
   useEffect(() => {
     setTimeout(() => setIsInited(true), 100);
+
+    // @ts-ignore
+    global?.Telegram?.WebApp?.ready();
   }, []);
 
   return (
@@ -28,42 +31,6 @@ export default function Page() {
       padding={"1rem"}
       height={"100vh"}
     >
-      {/* <img
-        src={"/sand.png"}
-        style={{
-          position: "fixed",
-          bottom: "-1rem",
-          width: "100%",
-          transform: isInited ? "translateY(0)" : "translateY(100vh)",
-          transition: ".5s",
-        }}
-      ></img> */}
-      {/* <img
-        src={"austin.png"}
-        style={{
-          position: "fixed",
-          bottom: "10rem",
-          transform:
-            "rotateZ(30deg) " +
-            (isInited ? " translateX(0)" : " translateX(-100vw)"),
-          left: "-3rem",
-          width: "10rem",
-          transition: ".5s",
-        }}
-      ></img> */}
-      {/* <img
-        src={"lag.png"}
-        style={{
-          position: "fixed",
-          bottom: "50%",
-          transform: isInited
-            ? "rotateZ(-60deg) translate(0, 50%)"
-            : "rotateZ(0deg) translate(100vw, 50%)",
-          right: "0",
-          height: "33vh",
-          transition: ".5s",
-        }}
-      ></img> */}
       <Flex
         flexDirection={"column"}
         alignItems={"center"}

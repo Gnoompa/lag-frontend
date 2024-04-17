@@ -3,11 +3,10 @@
 import { Flex, Text, Image } from "rebass/styled-components";
 import { useEffect, useRef, useState } from "react";
 import {
-  currentEpochAtom,
-  currentEpochTimeAtom,
+  clientGlobalScoreAtom,
+  clientPlayerScoreAtom,
   energyAtom,
-  globalScoreAtom,
-  scoreAtom,
+  persistedPlayerStateAtom,
 } from "../../state";
 import { getCurrentEpoch } from "../../StateInit";
 import { useFloatie } from "../../features/useFloatie";
@@ -16,6 +15,7 @@ import atomWithDebounce from "@/atoms/debouncedAtom";
 import { usePrivy } from "@privy-io/react-auth";
 import useArweave from "@/features/useArweave";
 import { Footer } from "@/components/Footer";
+import useWallet from "@/features/useWallet";
 
 const { debouncedValueAtom: debouncedScoreAtom, currentValueAtom: debouncedScoreAtomValue } =
   atomWithDebounce(0);
@@ -31,27 +31,25 @@ export default function Game() {
     Harvester,
   }
 
-  const currentEpoch = useAtomValue(currentEpochAtom);
-  const currentEpochTime = useAtomValue(currentEpochTimeAtom);
-
   const debouncedScore = useAtomValue(debouncedScoreAtom);
   const setDebouncedScore = useSetAtom(debouncedScoreAtom);
 
-  const globalScore = useAtomValue(globalScoreAtom);
-  const setGlobalScore = useSetAtom(globalScoreAtom);
+  const persistedPlayerState = useAtomValue(persistedPlayerStateAtom);
+  // @ts-ignore
+  const playerPfpImageUrl = persistedPlayerState?.pfp?.imageUrl;
+
+  const [clientGlobalScore, setClientGlobalScore] = useAtom(clientGlobalScoreAtom);
+  const [clientPlayerScore, setClientPlayerScore] = useAtom(clientPlayerScoreAtom);
 
   const [energy, setEnergy] = useAtom(energyAtom);
 
-  const persistedScore = useAtomValue(scoreAtom);
-  const setPersistedScore = useSetAtom(scoreAtom);
-
   const { authenticated, ready, user, signMessage } = usePrivy();
-  const ar = useArweave(user?.wallet?.address, signMessage);
+  const { wallet } = useWallet();
+  const ar = useArweave(wallet?.address);
 
   const [gameEpoch, setGameEpoch] = useState(0);
   const [phase, setPhase] = useState<GamePhase>(GamePhase.ChooseSide);
   const [chosenSide, setChosenSide] = useState<PlayerSide>();
-  const [score, setScore] = useState<number>(0);
   const [updatedScoreDelta, setUpdatedScoreDelta] = useState<number>(0);
   const [isOnSpice, setIsOnSpice] = useState(false);
   const [epochScore, setEpochScore] = useState(0);
@@ -91,13 +89,12 @@ export default function Game() {
   }, [isOnSpice]);
 
   useEffect(() => {
-    score &&
-      (setPersistedScore(score),
-      setDebouncedScore(score),
-      setGlobalScore(globalScore + updatedScoreDeltaRef.current)),
+    clientPlayerScore &&
+      (setDebouncedScore(clientPlayerScore),
+      setClientGlobalScore((clientGlobalScore || 0) + updatedScoreDeltaRef.current)),
       setEnergy(energy - updatedScoreDeltaRef.current);
     // setEpochScore((oldValue) => oldValue + updatedScoreDeltaRef.current));
-  }, [score]);
+  }, [clientPlayerScore]);
 
   // useEffect(() => {
   //   setEpochScore(0);
@@ -147,29 +144,19 @@ export default function Game() {
   };
 
   const handleTap = (scoreIncrement: number, hapticFeedback?: string) => {
-    setScore(score + scoreIncrement);
+    setClientPlayerScore((clientPlayerScore || 0) + scoreIncrement);
     setUpdatedScoreDelta(scoreIncrement);
 
     updatedScoreDeltaRef.current = scoreIncrement;
 
-    // @ts-ignore
     Telegram.WebApp.HapticFeedback.impactOccurred(
+      // @ts-ignore
       hapticFeedback || (scoreIncrement > 90 ? "heavy" : "light")
     );
   };
 
   return (
-    <Flex
-      width={"100%"}
-      flexDirection={"column"}
-      alignItems={"center"}
-      height={"100vh"}
-      // style={{
-      //   background: isOnSpice
-      //     ? "linear-gradient(#0500FF,#000000)"
-      //     : "linear-gradient(#FF6B00,#FAFF00)",
-      // }}
-    >
+    <Flex width={"100%"} flexDirection={"column"} alignItems={"center"} height={"100vh"}>
       {/* <motion.img
         src={"/cloudy.png"}
         animate={{ right: ["-120%", "120%"] }}
@@ -195,17 +182,19 @@ export default function Game() {
       ></Image>
 
       <Image
-        src={"/pfp.png"}
-        width={["12rem", "min(100%, 15rem)"]}
-        maxWidth={"25vh"}
+        src={playerPfpImageUrl || "/pfpplaceholder.svg"}
+        p={playerPfpImageUrl ? "1rem" : "2rem"}
+        // bg={"#6efec242"}
+        width={["15rem", "min(100%, 15rem)"]}
+        maxWidth={"27vh"}
         style={{
           position: "fixed",
-          bottom: "10.5rem",
+          bottom: "9.5rem",
           borderRadius: "1000px",
           // background: "linear-gradient(to bottom, #00000082, #39e6c9) border-box",
-          boxShadow: "0 0 50px #00ffd43d",
+          // boxShadow: "0 0 50px #00ffd43d",
 
-          border: "2px solid #aeffef",
+          // border: "2px solid #aeffef",
           transition: ".2s",
         }}
       ></Image>
@@ -262,7 +251,7 @@ export default function Game() {
               y2="13"
               gradientUnits="userSpaceOnUse"
             >
-              <stop offset={(1e7 - (globalScore || 1)) / 1e7} stop-color="#00FF94" />
+              <stop offset={(1e7 - (clientGlobalScore || 1)) / 1e7} stop-color="#00FF94" />
               <stop offset="0" stop-color="#00C572" stop-opacity="0.39" />
             </linearGradient>
           </defs>
@@ -275,39 +264,9 @@ export default function Game() {
           fontSize={"1rem"}
           // style={{ "-webkit-text-stroke-width": "1px", "-webkit-text-stroke-color": "black" }}
         >
-          {1e7 - globalScore} / {1e7}
+          {1e7 - (clientGlobalScore || 0)} / {1e7}
         </Text>
       </Flex>
-      {/* <Flex
-        backgroundColor={"var(--lagblack)"}
-        p={".5rem 1rem"}
-        width={"100%"}
-        justifyContent={"space-between"}
-        alignItems={"center"}
-      >
-        <Flex flexDirection={"column"}>
-          <Text color="var(--lagwhite)">EPOCH {currentEpoch}</Text>
-          <Text color="var(--lagwhite)">
-            {currentEpochTime}/{GAME_STAGES_DURATION[0] / 60}m
-          </Text>
-        </Flex>
-        <Flex flexDirection={"column"} alignItems={"flex-end"}>
-          <Text color="var(--lagwhite)">DEGENS</Text>
-          <Text color="var(--lagwhite)">1 🟢</Text>
-        </Flex>
-      </Flex> */}
-      {/* <Flex
-        flexDirection={"column"}
-        alignItems={"center"}
-        style={{ position: "fixed", top: ".75rem" }}
-      >
-        <Text color="var(--lagwhite)" fontWeight={"bold"}>
-          SEASON 1
-        </Text>
-        <Text color="var(--lagwhite)" opacity={0.5} fontSize={".75rem"}>
-          “DOUBLE TAP“
-        </Text>
-      </Flex> */}
       {phase === GamePhase.ChooseSide && (
         <Flex justifyContent={"center"}>
           {/* <Text

@@ -1,7 +1,7 @@
 "use client";
 
 import { Box, Button, Flex, Text } from "rebass";
-import { energyAtom, globalScoreAtom, scoreAtom, spoiceAtom } from "../state";
+import { clientGlobalScoreAtom, energyAtom } from "../state";
 import { useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import QRCode from "react-qr-code";
@@ -10,19 +10,21 @@ import { MAX_SCORE_PER_EPOCH } from "@/const";
 import DojoIcon from "./icons/Dojo";
 import AddIcon from "./icons/Add";
 import InventoryIcon from "./icons/Inventory";
+import useWallet from "@/features/useWallet";
+import { useRouter } from "next/router";
 
 export function Footer() {
-  const { ready, authenticated, login, logout, user, linkWallet } = usePrivy();
+  const router = useRouter();
+
+  const { ready, authenticated, login, logout, user, linkWallet, linkEmail, unlinkWallet } =
+    usePrivy();
+  const { wallet, linkedWallets } = useWallet();
 
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const spoice = useAtomValue(spoiceAtom);
-  const score = useAtomValue(scoreAtom);
-  const globalScore = useAtomValue(globalScoreAtom);
+  const globalScore = useAtomValue(clientGlobalScoreAtom);
 
   const energy = useAtomValue(energyAtom);
-
-  const wallet = user?.wallet;
 
   return (
     <Flex
@@ -41,20 +43,9 @@ export function Footer() {
         background: "linear-gradient(325deg, rgb(0 0 0 / 30%) 50%, rgb(83 255 216 / 46%) 200%)",
       }}
     >
-      {/* <Flex
-        width={`${(energy / MAX_SCORE_PER_EPOCH) * 100}%`}
-        height={"6px"}
-        backgroundColor={"#fff"}
-        style={{
-          position: "fixed",
-          bottom: "4rem",
-          left: 0,
-          border: "1px solid var(--lagblack)",
-          transition: ".2s",
-        }}
-      /> */}
       <svg
         style={{
+          pointerEvents: "none",
           position: "absolute",
           width: "100%",
           top: "-16px",
@@ -169,7 +160,7 @@ export function Footer() {
                     </Text>
                   </Flex>
                 </Flex>
-                <Flex style={{ gap: "4rem" }} alignItems={"center"} flexDirection={"column"}>
+                <Flex style={{ gap: "1rem" }} alignItems={"center"} flexDirection={"column"}>
                   <Button
                     onClick={() => setIsExpanded(false)}
                     backgroundColor={"transparent"}
@@ -179,7 +170,17 @@ export function Footer() {
                     aaight
                   </Button>
                   <Button
-                    onClick={linkWallet}
+                    onClick={() =>
+                      user?.linkedAccounts &&
+                      Promise.all(
+                        user?.linkedAccounts.map(
+                          (account) =>
+                            account.type == "wallet" &&
+                            account.connectorType !== "embedded" &&
+                            unlinkWallet(account.address)
+                        )
+                      ).finally(linkWallet)
+                    }
                     backgroundColor={"transparent"}
                     style={{ border: "1px solid #eaeaea" }}
                     p={"3rem 2rem"}
@@ -250,7 +251,7 @@ export function Footer() {
                 <Button
                   bg={"transparent"}
                   disabled={!ready}
-                  onClick={ready && authenticated ? () => setIsExpanded(true) : login}
+                  onClick={() => router.push("/linking")}
                 >
                   <Flex flexDirection={"column"} alignItems={"center"} style={{ gap: ".25rem" }}>
                     <InventoryIcon />
@@ -263,7 +264,7 @@ export function Footer() {
                         WebkitTextFillColor: "transparent",
                       }}
                     >
-                      INVENTORY
+                      ARMORY
                     </Text>
                   </Flex>
                 </Button>
@@ -283,12 +284,24 @@ export function Footer() {
         ) : (
           <Button
             backgroundColor={"transparent"}
-            style={{ border: "1px solid #eaeaea" }}
             width={"100%"}
-            p={".5rem"}
             onClick={login}
+            flexDirection={"column"}
+            alignItems={"center"}
           >
-            connect to save score
+            <Text
+              backgroundColor={"transparent"}
+              width={"100%"}
+              className="accentText"
+              fontSize={"1.75rem"}
+              fontWeight={600}
+              lineHeight={"1.75rem"}
+            >
+              CONNECT
+            </Text>
+            <Text opacity={0.5} fontSize={"0.75rem"}>
+              TO SAVE PROGRESS
+            </Text>
           </Button>
         )
       ) : (

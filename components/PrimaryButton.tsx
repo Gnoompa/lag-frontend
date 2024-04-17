@@ -1,7 +1,7 @@
 // @ts-ignore
-export default function PrimaryButton({ children }) {
+export default function PrimaryButton({ children, ...rest }) {
   return (
-    <svg width="178" height="85" viewBox="0 0 178 85" xmlns="http://www.w3.org/2000/svg">
+    <svg width="178" height="85" viewBox="0 0 178 85" {...rest} xmlns="http://www.w3.org/2000/svg">
       <mask id="path-1-inside-1_345_847" fill="white">
         <path d="M0 0H145C163.225 0 178 14.7746 178 33V84.7619H33C14.7746 84.7619 0 69.9873 0 51.7619V0Z" />
       </mask>
