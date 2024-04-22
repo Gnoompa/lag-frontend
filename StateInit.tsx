@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import {
+  arContractStateAtom,
   clientGlobalScoreAtom,
   clientPlayerScoreAtom,
   currentEpochAtom,
@@ -31,11 +32,13 @@ export const getCurrentEpochTime = () =>
 export function State() {
   const { user, ready, authenticated, signMessage } = usePrivy();
   const { wallet } = useWallet();
-  const { read, arWallet } = useArweave(user?.wallet?.address);
+  const { read, readState, arWallet } = useArweave(user?.wallet?.address);
 
   const [player, setPlayer] = useAtom(persistedPlayerStateAtom);
 
   const [energy, setEnergy] = useAtom(energyAtom);
+
+  const [arContractState, setArContractState] = useAtom(arContractStateAtom);
 
   const [persistedPlayerState, setPersistedPlayerState] = useAtom(persistedPlayerStateAtom);
   const [persistedPlayerScore, setPersistedPlayerScore] = useAtom(persistedPlayerScoreAtom);
@@ -48,8 +51,42 @@ export function State() {
   useEffect(() => {
     initEpochs();
     initEnergy();
-    syncGlobalState();
+    syncArContractState();
   }, []);
+
+  // useEffect(() => {
+  //   persistedPlayerState &&
+  //     // @ts-ignore
+  //     (setPersistedPlayerScore(persistedPlayerState.score || 0),
+  //     // @ts-ignore
+  //     setClientPlayerScore(persistedPlayerState.score || 0));
+  // }, [persistedPlayerState]);
+
+  // useEffect(() => {
+  //   persistedGlobalState &&
+  //     // @ts-ignore
+  //     (setPersistedGlobaScore(persistedGlobalState.score || 0),
+  //     // @ts-ignore
+  //     setClientGlobalScore(persistedGlobalState.score || 0));
+  // }, [persistedGlobalState]);
+
+  useEffect(() => {
+    console.log(arContractState);
+    arContractState &&
+      // @ts-ignore
+      (setPersistedGlobaScore(arContractState.global.score || 0),
+      // @ts-ignore
+      setClientGlobalScore(arContractState.global.score || 0));
+  }, [arContractState]);
+
+  useEffect(() => {
+    ready &&
+      authenticated &&
+      arWallet &&
+      arContractState &&
+      // @ts-ignore
+      setPersistedPlayerState(arContractState.users[arWallet.address]);
+  }, [authenticated, ready, user, arContractState, arWallet]);
 
   useEffect(() => {
     persistedPlayerState &&
@@ -58,18 +95,6 @@ export function State() {
       // @ts-ignore
       setClientPlayerScore(persistedPlayerState.score));
   }, [persistedPlayerState]);
-
-  useEffect(() => {
-    persistedGlobalState &&
-      // @ts-ignore
-      (setPersistedGlobaScore(persistedGlobalState.score),
-      // @ts-ignore
-      setClientGlobalScore(persistedGlobalState.score));
-  }, [persistedGlobalState]);
-
-  useEffect(() => {
-    ready && authenticated && arWallet && syncUserState();
-  }, [authenticated, ready, user, arWallet]);
 
   const initEnergy = () => {
     setInterval(
@@ -91,20 +116,16 @@ export function State() {
     setInterval(() => store.set(currentEpochTimeAtom, getCurrentEpochTime()), 1000);
   };
 
-  const syncGlobalState = () => {
-    read({
-      function: "global",
-      // @ts-ignore
-    }).then(({ result }) => result && setPersistedGlobalState(result));
+  const syncArContractState = () => {
+    readState().then((value) => setArContractState(value?.cachedValue?.state as {}));
   };
 
-  const syncUserState = () => {
-    read({
-      function: "user",
-      id: arWallet?.address,
-      // @ts-ignore
-    }).then(({ result }) => result && setPersistedPlayerState(result));
-  };
+  // const syncGlobalState = () => {
+  //   read({
+  //     function: "global",
+  //     // @ts-ignore
+  //   }).then(({ result }) => result && setPersistedGlobalState(result));
+  // };
 
   return <></>;
 }

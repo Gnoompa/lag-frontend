@@ -12,8 +12,9 @@ import { store } from "../state";
 import Head from "next/head";
 import Script from "next/script";
 import { State } from "@/StateInit";
-import { Footer } from "@/components/Footer";
 import { AppProps } from "next/app";
+import { ChakraProvider } from "@chakra-ui/react";
+import { theme } from "../theme";
 
 export default function Providers(props: AppProps) {
   const { Component, pageProps } = props;
@@ -33,7 +34,7 @@ export default function Providers(props: AppProps) {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="color-scheme" content="light dark" />
         <meta name="theme-color" content="#070606" />
-        <title>$LAG</title>
+        <title>DoubleTap</title>
       </Head>
 
       <Script src="https://telegram.org/js/telegram-web-app.js" />
@@ -43,7 +44,7 @@ export default function Providers(props: AppProps) {
         config={{
           supportedChains: [mantle],
           defaultChain: mantle,
-          loginMethods: ['email'],
+          loginMethods: ["email"],
           appearance: {
             theme: "#004339",
             accentColor: "#676FFF",
@@ -54,7 +55,9 @@ export default function Providers(props: AppProps) {
           <WagmiProvider config={config}>
             <Provider store={store}>
               <ArweaveProvider>
-                <Component {...pageProps} />
+                <ChakraProvider theme={theme}>
+                  <Component {...pageProps} />
+                </ChakraProvider>
                 <State />
               </ArweaveProvider>
             </Provider>

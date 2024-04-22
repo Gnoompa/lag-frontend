@@ -1,6 +1,15 @@
-export default function DojoIcon() {
+import { HTMLAttributes } from "react";
+
+export default function DojoIcon(props: HTMLAttributes<any>) {
   return (
-    <svg width="30" height="30" viewBox="0 0 45 39" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg
+      width="30"
+      height="30"
+      viewBox="0 0 45 39"
+      fill="none"
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <path
         fill-rule="evenodd"
         clip-rule="evenodd"

@@ -63,10 +63,16 @@ button {
   transition: .2s;
 }
 
+button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
 .accentText {  
   background: linear-gradient(#53FFD8, #02B1AA);  
   background-clip: text;
   -webkit-text-fill-color: transparent;
+  font-weight: bold;
 }
 
 .primaryButton:hover {

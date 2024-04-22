@@ -6,6 +6,7 @@ import {
   clientGlobalScoreAtom,
   clientPlayerScoreAtom,
   energyAtom,
+  persistedPlayerScoreAtom,
   persistedPlayerStateAtom,
 } from "../../state";
 import { getCurrentEpoch } from "../../StateInit";
@@ -35,6 +36,7 @@ export default function Game() {
   const setDebouncedScore = useSetAtom(debouncedScoreAtom);
 
   const persistedPlayerState = useAtomValue(persistedPlayerStateAtom);
+  const setPersistedPlayerScore = useSetAtom(persistedPlayerScoreAtom);
   // @ts-ignore
   const playerPfpImageUrl = persistedPlayerState?.pfp?.imageUrl;
 
@@ -110,7 +112,7 @@ export default function Game() {
     ar.write({
       function: "commit",
       score,
-    });
+    }).then(() => setPersistedPlayerScore(score));
   };
 
   // useEffect(() => {

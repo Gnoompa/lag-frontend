@@ -1,7 +1,7 @@
 "use client";
 
 import { Box, Button, Flex, Text } from "rebass";
-import { clientGlobalScoreAtom, energyAtom } from "../state";
+import { clientPlayerScoreAtom, energyAtom } from "../state";
 import { useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import QRCode from "react-qr-code";
@@ -22,7 +22,7 @@ export function Footer() {
 
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const globalScore = useAtomValue(clientGlobalScoreAtom);
+  const clientPlayerScore = useAtomValue(clientPlayerScoreAtom);
 
   const energy = useAtomValue(energyAtom);
 
@@ -116,7 +116,7 @@ export function Footer() {
           WebkitTextFillColor: "transparent",
         }}
       >
-        {globalScore}
+        {clientPlayerScore}
       </Text>
       {ready ? (
         authenticated ? (
@@ -215,7 +215,11 @@ export function Footer() {
                 display={"grid"}
                 style={{ gridTemplateColumns: "repeat(3, 1fr)" }}
               >
-                <Button bg={"transparent"}>
+                <Button
+                  bg={"transparent"}
+                  onClick={() => router.push("/dojo")}
+                  disabled={!ready}
+                >
                   <Flex flexDirection={"column"} alignItems={"center"} style={{ gap: ".25rem" }}>
                     <DojoIcon />
                     <Text

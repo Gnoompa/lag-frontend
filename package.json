@@ -9,6 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@chakra-ui/react": "^2.8.2",
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.5",
     "@privy-io/react-auth": "^1.59.7",
     "@privy-io/wagmi": "^0.2.2",
     "@rarible/sdk": "0.13.68-fix.19",
@@ -16,6 +19,7 @@
     "@types/peerjs": "^1.1.0",
     "@types/rebass": "^4.0.14",
     "arbundles": "^0.11.0",
+    "ethers": "^6.12.0",
     "framer-motion": "^11.0.24",
     "jotai": "^2.7.1",
     "lodash": "^4.17.21",
@@ -23,6 +27,7 @@
     "peerjs": "^1.5.2",
     "react": "^18",
     "react-dom": "^18",
+    "react-focus-lock": "2.9.6",
     "react-qr-code": "^2.0.12",
     "react-responsive-carousel": "^3.2.23",
     "rebass": "^4.0.7",

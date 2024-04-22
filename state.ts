@@ -8,6 +8,8 @@ export const activeEpochAtom = atom(0);
 
 export const energyAtom = atom(MAX_SCORE_PER_EPOCH);
 
+export const arContractStateAtom = atom<object | undefined>(undefined)
+
 export const persistedPlayerStateAtom = atom<object | undefined>(undefined)
 export const persistedPlayerScoreAtom = atom<number | undefined>(undefined)
 export const clientPlayerScoreAtom = atom<number | undefined>(undefined)

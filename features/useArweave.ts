@@ -8,7 +8,7 @@ import { PrivateKeyAccount, privateKeyToAccount } from "viem/accounts";
 export const ARWEAVE_CONTRACT = "WTlvCuzEK4tTqVBwiCjXpkmnp-50l-DakASrPVRqTNI";
 const SIGN_MSG = "__linkedarwallet";
 
-const contract = WarpFactory.forMainnet().contract(ARWEAVE_CONTRACT).setEvaluationOptions({
+const getContract = () => WarpFactory.forMainnet().contract(ARWEAVE_CONTRACT).setEvaluationOptions({
   remoteStateSyncEnabled: true,
 });
 
@@ -28,7 +28,7 @@ export default function useArweave(address: string | undefined) {
 
     //@ts-ignore
     address && sign && !_getLinkedArWallet(address)
-      ? contract
+      ? getContract()
         .connect(arWallet.wallet)
         .writeInteraction({
           function: "auth",
@@ -40,12 +40,14 @@ export default function useArweave(address: string | undefined) {
 
   const write: Contract["writeInteraction"] = async (input, options) =>
     ready
-      ? contract
+      ? getContract()
         .connect(new EthereumSigner(await _getLinkedArWallet()!))
         .writeInteraction(input, options)
       : null;
 
-  const read: Contract["viewState"] = async (input) => contract.viewState(input);
+  const read: Contract["viewState"] = async (input) => getContract().viewState(input);
+
+  const readState: Contract["readState"] = async () => getContract().readState();
 
   const _getArWallet = async (address: string, sign: (msg: string) => Promise<string>) =>
     (async (savedPk) =>
@@ -65,5 +67,6 @@ export default function useArweave(address: string | undefined) {
     ready,
     write,
     read,
+    readState
   };
 }
