@@ -5,12 +5,14 @@ import { useEffect, useState } from "react";
 import { Contract, WarpFactory } from "warp-contracts/web";
 import { PrivateKeyAccount, privateKeyToAccount } from "viem/accounts";
 
-export const ARWEAVE_CONTRACT = "WTlvCuzEK4tTqVBwiCjXpkmnp-50l-DakASrPVRqTNI";
+export const ARWEAVE_CONTRACT = "PsB8l_vStWnEcIP5WSSiGiVSVVBsHHaq9LzYTX4Ik2g";
 const SIGN_MSG = "__linkedarwallet";
 
-const getContract = () => WarpFactory.forMainnet().contract(ARWEAVE_CONTRACT).setEvaluationOptions({
-  remoteStateSyncEnabled: true,
-});
+// const getContract = () => WarpFactory.forMainnet().contract(ARWEAVE_CONTRACT).setEvaluationOptions({
+//   remoteStateSyncEnabled: true,
+// });
+
+const getContract = () => WarpFactory.forMainnet().contract(ARWEAVE_CONTRACT);
 
 export default function useArweave(address: string | undefined) {
   const LINKED_WALLET_STORAGE_ID = `ar${ARWEAVE_CONTRACT}${address}`;
