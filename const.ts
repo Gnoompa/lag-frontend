@@ -1,7 +1,9 @@
+
 export const GENESIS_EPOCH_TIMESTAMP = 1711384626
 export const GAME_STAGES_DURATION = [60, 30, 30]
 
-export const MAX_SCORE_PER_EPOCH = 10_000; // 37 seconds of tapping with CPS of 15
+export const MAX_SCORE_PER_MIN = 1_000;
+export const ENERGY_RESTORE_PER_SECOND = 1_000 / 60;
 
 export enum EGameStage {
     Active,
@@ -33,3 +35,31 @@ export enum EWinningRole {
     Harvester,
     Tie
 }
+
+export const ERC20_TOKENS = [
+    {
+        label: "$INU",
+        id: "inu",
+        image: "https://framerusercontent.com/images/f0KebTk7fBlOgTfRSJe1xIo0HMw.png",
+        value: 213,
+    },
+    {
+        label: "$PUFF",
+        id: "puff",
+        image: "https://puffthedragon.xyz/_next/image?url=%2Fimages%2Flogo.webp&w=96&q=75",
+        value: 113,
+    },
+    {
+        label: "$SHIB",
+        id: "shib",
+        image: "https://s2.coinmarketcap.com/static/img/coins/200x200/5994.png",
+        value: 73,
+    },
+];
+
+export const GANGS = ERC20_TOKENS.map((token) => ({
+    image: token.image,
+    name: token.label,
+    score: 0,
+    id: token.id,
+}))

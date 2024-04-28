@@ -1174,3 +1174,10 @@ interface BasePopupButton {
   declare global {
     const Telegram: { WebApp: TelegramWebApps.WebApp }
   }
+
+  interface IGang {
+    id: string;
+    name: string;
+    score: number;
+    image: string;
+  }

@@ -1,67 +1,113 @@
 "use client";
 
-import { Box, Button, Flex, Text } from "rebass/styled-components";
-import { useEffect, useState } from "react";
-import { useAtomValue } from "jotai/react";
-import { currentEpochAtom } from "../state";
-import { useRouter } from "next/navigation";
-import Title from "@/components/Title";
-import PrimaryButton from "@/components/PrimaryButton";
+import { useEffect, useMemo, useState } from "react";
+import { Button, Flex } from "@chakra-ui/react";
+import { ERC20_TOKENS } from "@/const";
+import useBubbleMap from "@/features/useBubbleMap";
+import { useRouter } from "next/router";
+import useArweave from "@/features/useArweave";
+import { useLogin, usePrivy } from "@privy-io/react-auth";
+import { useAtom } from "jotai";
+import { persistedPlayerStateAtom } from "@/state";
+
+export enum EStage {
+  initial,
+  gangSelection,
+  game,
+  confirmed,
+}
 
 export default function Page() {
-  const currentEpoch = useAtomValue(currentEpochAtom);
-
   const router = useRouter();
 
-  const [isInited, setIsInited] = useState(false);
+  const { ready, user, authenticated, isModalOpen } = usePrivy();
+  const { login } = useLogin({
+    onComplete(user, isNewUser: boolean, wasAlreadyAuthenticated: boolean) {
+      !wasAlreadyAuthenticated && setStage(EStage.confirmed);
+    },
+  });
+  const { ready: arReady, getArWallet } = useArweave(user?.wallet?.address);
+
+  const [persistedPlayerState, setPersistedPlayerState] = useAtom(persistedPlayerStateAtom);
+
+  const [stage, setStage] = useState<EStage>();
+
+  const bubbleMapTransform = useMemo(
+    () => ({
+      y: stage === EStage.confirmed ? -window.innerHeight : 0,
+      opacity: 0
+    }),
+    [stage]
+  );
+
+  const bubbleMap = useBubbleMap(
+    [
+      ...ERC20_TOKENS,
+      {
+        label: "",
+        image: "/banner1.svg",
+        value: 200,
+      },
+      {
+        label: "",
+        image: "/banner2.svg",
+        value: 125,
+      },
+      {
+        label: "",
+        image: "/banner3.svg",
+        value: 150,
+      },
+      {
+        label: "",
+        image: "/banner4.svg",
+        value: 175,
+      },
+    ],
+    bubbleMapTransform
+  );
 
   useEffect(() => {
-    setTimeout(() => setIsInited(true), 100);
+    setTimeout(() => setStage(EStage.initial), 100);
 
     // @ts-ignore
     global?.Telegram?.WebApp?.ready();
   }, []);
+
+  useEffect(() => {
+    stage === EStage.gangSelection && setTimeout(() => router.push("gangs"), 500);
+    stage === EStage.game && setTimeout(() => router.push("g"), 500);
+  }, [stage]);
+
+  useEffect(() => {
+    ready &&
+      user &&
+      authenticated &&
+      stage === EStage.confirmed &&
+      setStage(getArWallet(user.wallet?.address!) ? EStage.game : EStage.gangSelection);
+  }, [ready, user, arReady, stage]);
 
   return (
     <Flex
       width={"100%"}
       flexDirection={"column"}
       alignItems={"center"}
-      // backgroundColor={"var(--lagblack)"}
       padding={"1rem"}
       height={"100vh"}
     >
-      <Flex
-        flexDirection={"column"}
-        alignItems={"center"}
-        style={{
-          position: "relative",
-          borderRadius: "10px",
-          border: "1px solid #1c3630",
-          background: "linear-gradient(325deg, rgb(0 0 0 / 30%) 50%, rgb(83 255 216 / 46%) 200%)",
-        }}
-        justifyContent={"space-around"}
-        height={"100%"}
-        width={"100%"}
-        p={"0 2rem"}
+      <Button
+        onClick={ready && authenticated ? () => setStage(EStage.confirmed) : login}
+        isLoading={!ready || isModalOpen}
+        variant={"accent"}
+        transition={".2s"}
+        size={"lg"}
+        px={"5rem"}
+        position={"fixed"}
+        bottom={stage !== EStage.initial ? "-5rem" : "20vh"}
+        zIndex={"99999"}
       >
-        <Flex flex={0.6} alignItems={"center"}>
-          <Title />
-        </Flex>
-
-        <Button
-          onClick={() => router.push("/game")}
-          bg={"transparent"}
-          className="primaryButton"
-          flex={0.2}
-        >
-          <PrimaryButton>ENTER</PrimaryButton>
-        </Button>
-        <Flex style={{ gap: ".5rem" }} alignItems={"flex-end"} opacity={0.5} flex={0.1}>
-          <Text fontSize={[".5rem", ".75rem"]}>BY</Text>
-          <Text fontSize={["1rem", "1.25rem"]}>DOUBLETAP.WTF</Text>
-        </Flex>
-      </Flex>
+        GANG IN
+      </Button>
     </Flex>
   );
 }

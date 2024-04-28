@@ -8,6 +8,7 @@ import {
   clientPlayerScoreAtom,
   currentEpochAtom,
   currentEpochTimeAtom,
+  debouncedEnergyAtom,
   energyAtom,
   persistedGlobalScoreAtom,
   persistedGlobalStateAtom,
@@ -15,11 +16,15 @@ import {
   persistedPlayerStateAtom,
   store,
 } from "./state";
-import { GAME_STAGES_DURATION, GENESIS_EPOCH_TIMESTAMP, MAX_SCORE_PER_EPOCH } from "./const";
+import {
+  ENERGY_RESTORE_PER_SECOND,
+  GAME_STAGES_DURATION,
+  GENESIS_EPOCH_TIMESTAMP,
+  MAX_SCORE_PER_MIN,
+} from "./const";
 import useArweave from "@/features/useArweave";
 import { min } from "lodash";
 import { useAtom, useSetAtom } from "jotai";
-import useWallet from "./features/useWallet";
 
 export const getCurrentEpoch = () =>
   ~~((Date.now() / 1000 - GENESIS_EPOCH_TIMESTAMP) / GAME_STAGES_DURATION[0]);
@@ -31,10 +36,7 @@ export const getCurrentEpochTime = () =>
 
 export function State() {
   const { user, ready, authenticated, signMessage } = usePrivy();
-  const { wallet } = useWallet();
-  const { read, readState, arWallet } = useArweave(user?.wallet?.address);
-
-  const [player, setPlayer] = useAtom(persistedPlayerStateAtom);
+  const { ready: arReady, read, readState, arWallet } = useArweave(user?.wallet?.address);
 
   const [energy, setEnergy] = useAtom(energyAtom);
 
@@ -48,11 +50,17 @@ export function State() {
   const setPersistedGlobaScore = useSetAtom(persistedGlobalScoreAtom);
   const setClientGlobalScore = useSetAtom(clientGlobalScoreAtom);
 
+  const [debouncedEnergy, setDebouncedEnergy] = useAtom(debouncedEnergyAtom);
+
   useEffect(() => {
     initEpochs();
     initEnergy();
     syncArContractState();
-  }, []);
+  }, [arWallet]);
+
+  useEffect(() => {
+    arReady && syncArContractState();
+  }, [arReady]);
 
   // useEffect(() => {
   //   persistedPlayerState &&
@@ -71,7 +79,6 @@ export function State() {
   // }, [persistedGlobalState]);
 
   useEffect(() => {
-    console.log(arContractState);
     arContractState &&
       // @ts-ignore
       (setPersistedGlobaScore(arContractState.global.score || 0),
@@ -80,8 +87,8 @@ export function State() {
   }, [arContractState]);
 
   useEffect(() => {
+    console.log(arContractState)
     ready &&
-      authenticated &&
       arWallet &&
       arContractState &&
       // @ts-ignore
@@ -96,13 +103,20 @@ export function State() {
       setClientPlayerScore(persistedPlayerState.score));
   }, [persistedPlayerState]);
 
+  useEffect(() => {
+    setDebouncedEnergy(energy);
+  }, [energy]);
+
   const initEnergy = () => {
     setInterval(
       () =>
         setEnergy(
-          (oldEnergy) =>
-            min([oldEnergy + 10 > MAX_SCORE_PER_EPOCH ? MAX_SCORE_PER_EPOCH : oldEnergy + 10]) ||
-            MAX_SCORE_PER_EPOCH
+          (oldEnergy: number) =>
+            min([
+              oldEnergy + ENERGY_RESTORE_PER_SECOND > MAX_SCORE_PER_MIN
+                ? MAX_SCORE_PER_MIN
+                : ~~(oldEnergy + ENERGY_RESTORE_PER_SECOND),
+            ]) || MAX_SCORE_PER_MIN
         ),
       1000
     );

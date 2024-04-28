@@ -1,0 +1,145 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { Container, Flex, Image, Text, Button } from "@chakra-ui/react";
+import { useRouter } from "next/router";
+import { ERC20_TOKENS } from "@/const";
+import { IGang } from "@/typings";
+import { motion, AnimatePresence } from "framer-motion";
+import useArweave from "@/features/useArweave";
+import { without } from "lodash";
+import { usePrivy } from "@privy-io/react-auth";
+import useWallet from "@/features/useWallet";
+import { useAtom } from "jotai";
+import { persistedPlayerStateAtom } from "@/state";
+
+export enum EStage {
+  initial,
+  game,
+}
+
+export default function Page() {
+  enum EProcess {
+    settingCurrentGang,
+  }
+
+  const [process, setProcess] = useState<EProcess[]>([]);
+
+  const router = useRouter();
+  const { ready, user, login, authenticated } = usePrivy();
+  const { signFn } = useWallet();
+  const ar = useArweave(user?.wallet?.address);
+
+  const [stage, setStage] = useState<EStage>(EStage.initial);
+
+  const [allGangs, setAllGangs] = useState<IGang[]>([]);
+  const [persistedPlayerState, setPersistedPlayerState] = useAtom(persistedPlayerStateAtom);
+
+  useEffect(() => {
+    setAllGangs(
+      ERC20_TOKENS.map((token) => ({
+        image: token.image,
+        name: token.label,
+        score: 0,
+        id: token.id,
+      }))
+    );
+  }, []);
+
+  useEffect(() => {
+    ready && user?.wallet?.address && signFn && ar.auth(user?.wallet?.address!, signFn);
+  }, [ready, user, signFn]);
+
+  useEffect(() => {
+    stage === EStage.game && setTimeout(() => router.push("g"));
+  }, [stage]);
+
+  const onJoinGangButtonClick = (gang: IGang) => {
+    if (!user?.wallet?.address || !authenticated) {
+      login();
+
+      return;
+    }
+
+    setProcess([...process, EProcess.settingCurrentGang]);
+
+    ar.write({ function: "selectGuild", guild: gang.id })
+      .then(
+        () => (
+          setPersistedPlayerState({ ...persistedPlayerState, currentGuild: gang.id }),
+          setStage(EStage.game)
+        )
+      )
+      .catch(() => alert("Oops, smth went wrong..."))
+      .finally(() => setProcess(without(process, EProcess.settingCurrentGang)));
+  };
+
+  return (
+    <Flex width={"100%"} flexDirection={"column"} alignItems={"center"} padding={"1rem"}>
+      <AnimatePresence>
+        {stage === EStage.initial && (
+          <motion.div
+            initial={{ y: 300, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -300, opacity: 0 }}
+          >
+            <Text variant={"accent"} fontSize={"3rem"}>
+              GANGS
+            </Text>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <Flex flexDir={"column"} gap={"1rem"} w={"100%"} mt={"2rem"}>
+        <Flex flexDir={"column"} gap={"1rem"} alignItems={"center"}>
+          <Text fontWeight={"bold"} fontSize={"1.5rem"}>
+            All
+          </Text>
+          <AnimatePresence>
+            {stage === EStage.initial &&
+              allGangs?.map((gang, gangIndex) => (
+                <motion.div
+                  key={gangIndex}
+                  style={{ width: "100%" }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ delay: gangIndex / 10 }}
+                >
+                  <Container
+                    variant={"accent"}
+                    display={"flex"}
+                    justifyContent={"space-between"}
+                    alignItems={"center"}
+                  >
+                    <Flex alignItems={"center"} gap={"1rem"}>
+                      <Image
+                        src={gang.image}
+                        fallback={
+                          <svg width="3rem" height="3rem" viewBox="0 0 309 309" fill="none">
+                            <circle cx="154.5" cy="154.5" r="154.5" fill="black" />
+                          </svg>
+                        }
+                        w={"3rem"}
+                        height={"3rem"}
+                      ></Image>
+                      <Text color={"black"} fontWeight={"bold"}>
+                        {gang.name}
+                      </Text>
+                    </Flex>
+                    <Button
+                      variant={"secondary"}
+                      onClick={() => onJoinGangButtonClick(gang)}
+                      isLoading={process.includes(EProcess.settingCurrentGang) || !ready}
+                    >
+                      GET IN
+                    </Button>
+                  </Container>
+                </motion.div>
+              ))}
+          </AnimatePresence>
+        </Flex>
+      </Flex>
+    </Flex>
+  );
+}

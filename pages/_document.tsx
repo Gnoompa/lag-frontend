@@ -1,4 +1,5 @@
 import { Html, Main, NextScript, Head } from "next/document";
+import Script from "next/script";
 
 export default function Document() {
   return (
@@ -12,6 +13,7 @@ export default function Document() {
         />
       </Head>
       <body>
+        <Script strategy="beforeInteractive" src="https://telegram.org/js/telegram-web-app.js" />
         <Main />
         <NextScript />
       </body>

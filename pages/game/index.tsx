@@ -10,7 +10,7 @@ import {
   persistedPlayerStateAtom,
 } from "../../state";
 import { getCurrentEpoch } from "../../StateInit";
-import { useFloatie } from "../../features/useFloatie";
+// import { useFloatie } from "../../features/useFloatie";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import atomWithDebounce from "@/atoms/debouncedAtom";
 import { usePrivy } from "@privy-io/react-auth";
@@ -58,17 +58,17 @@ export default function Game() {
 
   const updatedScoreDeltaRef = useRef(updatedScoreDelta);
 
-  const floatieRef = useFloatie(
-    // @ts-ignore
-    (cb) =>
-      cb(
-        updatedScoreDeltaRef.current > 90
-          ? `${updatedScoreDeltaRef.current}!!!`
-          : `${updatedScoreDeltaRef.current}`,
-        updatedScoreDeltaRef.current > 90 ? ["color:#ffe735"] : ["color:#53FFD8"]
-      ),
-    !!updatedScoreDelta
-  );
+  // const floatieRef = useFloatie(
+  //   // @ts-ignore
+  //   (cb) =>
+  //     cb(
+  //       updatedScoreDeltaRef.current > 90
+  //         ? `${updatedScoreDeltaRef.current}!!!`
+  //         : `${updatedScoreDeltaRef.current}`,
+  //       updatedScoreDeltaRef.current > 90 ? ["color:#ffe735"] : ["color:#53FFD8"]
+  //     ),
+  //   !!updatedScoreDelta
+  // );
 
   useEffect(() => {
     setGameEpoch(getCurrentEpoch());
@@ -94,15 +94,8 @@ export default function Game() {
     clientPlayerScore &&
       (setDebouncedScore(clientPlayerScore),
       setClientGlobalScore((clientGlobalScore || 0) + updatedScoreDeltaRef.current)),
-      setEnergy(energy - updatedScoreDeltaRef.current);
-    // setEpochScore((oldValue) => oldValue + updatedScoreDeltaRef.current));
+      setEnergy(energy - updatedScoreDeltaRef.current);    
   }, [clientPlayerScore]);
-
-  // useEffect(() => {
-  //   setEpochScore(0);
-  // }, [currentEpoch]);
-
-  useEffect(() => {}, [epochScore]);
 
   useEffect(() => {
     debouncedScore && commitScore(debouncedScore);
@@ -298,7 +291,7 @@ export default function Game() {
         </Flex>
       )}
 
-      <span
+      {/* <span
         ref={floatieRef}
         onMouseDown={onTap}
         style={{
@@ -308,7 +301,7 @@ export default function Game() {
           height: "100vh",
           bottom: 0,
         }}
-      ></span>
+      ></span> */}
       {/* <Image
         src={"/thunder.png"}
         height={"50%"}

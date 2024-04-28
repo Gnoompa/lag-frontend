@@ -1,13 +1,17 @@
 "use client"
 
 import { atom, createStore } from 'jotai';
-import { EGameStage, MAX_SCORE_PER_EPOCH } from "./const";
+import { EGameStage, MAX_SCORE_PER_MIN } from "./const";
+import atomWithDebounce from './atoms/debouncedAtom';
 
 export const currentEpochAtom = atom(0)
 export const activeEpochAtom = atom(0);
 
-export const energyAtom = atom(MAX_SCORE_PER_EPOCH);
+export const energyAtom = atom(MAX_SCORE_PER_MIN);
+export const { debouncedValueAtom: debouncedEnergyAtom, currentValueAtom: debouncedEnergyAtomValue } =
+    atomWithDebounce(0);
 
+export const arWalletIsReadyAtom = atom<boolean>(false)
 export const arContractStateAtom = atom<object | undefined>(undefined)
 
 export const persistedPlayerStateAtom = atom<object | undefined>(undefined)
