@@ -5,7 +5,7 @@ import { PrivyProvider } from "@privy-io/react-auth";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, PropsWithChildren } from "react";
 import { WagmiProvider, createConfig } from "@privy-io/wagmi";
-import { mantle } from "wagmi/chains";
+import { mainnet, mantle } from "wagmi/chains";
 import { http } from "wagmi";
 import { Provider } from "jotai";
 import { store } from "../state";
@@ -22,9 +22,9 @@ export default function Providers(props: AppProps) {
   const [queryClient] = useState(() => new QueryClient());
 
   const config = createConfig({
-    chains: [mantle],
+    chains: [mainnet],
     transports: {
-      [mantle.id]: http(),
+      [mainnet.id]: http(),
     },
   });  
 
