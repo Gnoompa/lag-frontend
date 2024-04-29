@@ -28,12 +28,13 @@ export default function Page() {
   const router = useRouter();
   const { ready, user, login, authenticated } = usePrivy();
   const { signFn } = useWallet();
-  const ar = useArweave(user?.wallet?.address);
+  const { write, ready: arReady, auth, isLoading } = useArweave(user?.wallet?.address);
 
   const [stage, setStage] = useState<EStage>(EStage.initial);
 
   const [allGangs, setAllGangs] = useState<IGang[]>([]);
   const [persistedPlayerState, setPersistedPlayerState] = useAtom(persistedPlayerStateAtom);
+  const canGangIn = ready && user?.wallet?.address && authenticated && arReady;
 
   useEffect(() => {
     setAllGangs(
@@ -47,8 +48,12 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
-    ready && user?.wallet?.address && signFn && ar.auth(user?.wallet?.address!, signFn);
-  }, [ready, user, signFn]);
+    ready &&
+      user?.wallet?.address &&
+      authenticated &&
+      signFn &&
+      auth(user?.wallet?.address!, signFn);
+  }, [ready, user, authenticated, signFn]);
 
   useEffect(() => {
     stage === EStage.game && setTimeout(() => router.push("g"));
@@ -59,11 +64,17 @@ export default function Page() {
       login();
 
       return;
+    }    
+
+    if (!arReady) {
+      auth(user?.wallet?.address, signFn!);
+
+      return;
     }
 
     setProcess([...process, EProcess.settingCurrentGang]);
 
-    ar.write({ function: "selectGuild", guild: gang.id })
+    write({ function: "selectGuild", guild: gang.id })
       .then(
         () => (
           setPersistedPlayerState({ ...persistedPlayerState, currentGuild: gang.id }),
@@ -130,9 +141,11 @@ export default function Page() {
                     <Button
                       variant={"secondary"}
                       onClick={() => onJoinGangButtonClick(gang)}
-                      isLoading={process.includes(EProcess.settingCurrentGang) || !ready}
+                      isLoading={
+                        process.includes(EProcess.settingCurrentGang) || !ready || isLoading
+                      }
                     >
-                      GANG IN
+                      {!arReady ? "CONNECT" : "GANG IN"}
                     </Button>
                   </Container>
                 </motion.div>

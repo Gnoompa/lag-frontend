@@ -19,6 +19,7 @@ const getContract = () => WarpFactory.forMainnet().contract(ARWEAVE_CONTRACT);
 export default function useArweave(address: string | undefined) {
   const LINKED_WALLET_STORAGE_ID = `ar${ARWEAVE_CONTRACT}${address}`;
 
+  const [isLoading, setIsLoading] = useState(true);
   const [ready, setReady] = useAtom(arWalletIsReadyAtom);
   // const [ready, setReady] = useState(false);
   const [arWallet, setArWallet] = useState<PrivateKeyAccount>()
@@ -29,10 +30,17 @@ export default function useArweave(address: string | undefined) {
   }, [ready, address])
 
   const auth = async (address: string, sign: (msg: string) => Promise<string>, invitedBy: string = "") => {
+    if (_getLinkedArWallet(address)) {
+      setReady(true);
+      setIsLoading(false)
+
+      return;
+    }
+
     const arWallet = await _getArWallet(address, sign);
 
     //@ts-ignore
-    address && sign && !_getLinkedArWallet(address)
+    arWallet && address && sign
       ? getContract()
         .connect(arWallet.wallet)
         .writeInteraction({
@@ -40,8 +48,8 @@ export default function useArweave(address: string | undefined) {
           evmAddress: address,
           invitedBy
         })
-        .then(() => (setReady(true), _setLinkedArWallet(arWallet.pk)))
-      : setReady(true);
+        .then(() => (setReady(true), _setLinkedArWallet(arWallet.pk))).finally(() => setIsLoading(false))
+      : (setReady(false), setIsLoading(false));
   };
 
   const write: Contract["writeInteraction"] = async (input, options) =>
@@ -55,12 +63,12 @@ export default function useArweave(address: string | undefined) {
 
   const readState: Contract["readState"] = async () => getContract().readState();
 
-  const _getArWallet = async (address: string, sign: (msg: string) => Promise<string>) =>
+  const _getArWallet = async (address: string, sign: (msg: string) => Promise<string | undefined>) =>
     (async (savedPk) =>
       savedPk
         ? { wallet: new EthereumSigner(savedPk), pk: savedPk }
-        : ((pk) => ({ wallet: new EthereumSigner(pk), pk }))(
-          (await sign(SIGN_MSG)).substring(0, 66)
+        : ((pk) => pk ? { wallet: new EthereumSigner(pk), pk } : undefined)(
+          (await sign(SIGN_MSG).catch(() => { }))?.substring(0, 66)
         ))(_getLinkedArWallet());
 
   const _getLinkedArWallet = (address?: string) => localStorage.getItem(address ? `ar${ARWEAVE_CONTRACT}${address}` : LINKED_WALLET_STORAGE_ID);
@@ -73,6 +81,7 @@ export default function useArweave(address: string | undefined) {
     auth,
     arWallet,
     getArWallet,
+    isLoading,
     ready,
     write,
     read,

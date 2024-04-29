@@ -21,6 +21,7 @@ export default function useBubbleMap(items: TBubbleMapItems | undefined, transfo
   const height = global.innerHeight;
   const sizeDivisor = 2.5;
   const nodePadding = 3;
+  const MIN_BUBBLE_RAD = 50
 
   const [mapItems, setMapItems] = useState<[]>();
   const [simulation, setSimulation] = useState<{}>();
@@ -201,13 +202,13 @@ export default function useBubbleMap(items: TBubbleMapItems | undefined, transfo
   function types(d) {
     d.gdp = +d.value;
     d.size = +d.value / sizeDivisor;
-    d.size < 6 ? (d.radius = 6) : (d.radius = d.size);
+    d.size < MIN_BUBBLE_RAD ? (d.radius = MIN_BUBBLE_RAD) : (d.radius = d.size);
     return d;
   }
 
   // @ts-ignore
   function updateNodeSize(d, value: number) {
-    d.size = value / sizeDivisor, d.radius = d.size < 6 ? 6 : d.size;
+    d.size = value / sizeDivisor, d.radius = d.size < MIN_BUBBLE_RAD ? MIN_BUBBLE_RAD : d.size;
   }
 
   // const transformMapItems = (node: {}, transform: ITransform) => {
