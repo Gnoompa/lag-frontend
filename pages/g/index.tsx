@@ -61,7 +61,7 @@ export default function Page() {
   const [arContractState, setArContractState] = useAtom(arContractStateAtom);
 
   // @ts-ignore
-  const currentGang = persistedPlayerState?.currentGuild;
+  const currentGangId = persistedPlayerState?.currentGuild;
 
   const [lastCheckin, setLastCheckin] = useState<number>();
 
@@ -95,14 +95,14 @@ export default function Page() {
 
   useEffect(() => {
     // @ts-ignore
-    setLastCheckin(persistedPlayerState?.checkins?.[currentGang]?.last);
+    setLastCheckin(persistedPlayerState?.checkins?.[currentGangId]?.last);
     // @ts-ignore
-    setCheckinAmount(persistedPlayerState?.checkins?.[currentGang]?.amount || 0);
+    setCheckinAmount(persistedPlayerState?.checkins?.[currentGangId]?.amount || 0);
     // @ts-ignore
-    persistedPlayerState?.score?.[currentGang]?.score &&
+    persistedPlayerState?.score?.[currentGangId]?.score &&
       setTimeout(
         // @ts-ignore
-        () => setClientPlayerScore(persistedPlayerState?.score?.[currentGang]?.score),
+        () => setClientPlayerScore(persistedPlayerState?.score?.[currentGangId]?.score),
         800
       );
   }, [persistedPlayerState]);
@@ -158,7 +158,7 @@ export default function Page() {
     write({
       function: "commitScore",
       score,
-      id: currentGang,
+      id: currentGangId,
     }).then(() => setPersistedPlayerScore(score));
   };
 
@@ -186,7 +186,7 @@ export default function Page() {
   const checkin = () => {
     setProcess([...process, EProcess.checkingIn]);
 
-    write({ function: "checkin", guild: currentGang })
+    write({ function: "checkin", guild: currentGangId })
       .then(() => (setLastCheckin(+Date.now() / 1000), setCheckinAmount(checkinAmount! + 1)))
       .catch(() => alert("Oops, smth went wrong..."))
       .finally(() => setProcess(without(process, EProcess.checkingIn)));
@@ -214,12 +214,13 @@ export default function Page() {
 
   return (
     <Flex width={"100%"} flexDirection={"column"} alignItems={"center"} padding={"1rem"}>
-      <Flex flexDir={"column"} gap={"1rem"} w={"100%"} mt={"2rem"}>
+      <Flex flexDir={"column"} gap={"1rem"} w={"100%"} mt={"2rem"} alignItems={"center"}>
         <Flex
           flexDir={"column"}
-          gap={"2rem"}
+          gap={"1.5rem"}
           alignItems={"center"}
-          mt={"calc(70vh - 5rem)"}
+          pos={"absolute"}
+          bottom={"1rem"}
           zIndex={1}
         >
           <AnimatePresence>
@@ -234,7 +235,7 @@ export default function Page() {
             </motion.div>
           </AnimatePresence>
           <AnimatePresence>
-            {stage === EStage.initial && persistedPlayerState && currentGang ? (
+            {stage === EStage.initial && persistedPlayerState && currentGangId ? (
               <Flex gap={"1.5rem"}>
                 <motion.div
                   initial={{ y: 300, opacity: 0 }}
@@ -422,16 +423,33 @@ export default function Page() {
           </AnimatePresence>
           <Flex>
             <AnimatePresence>
-              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
-                {currentGang && (
-                  <Button onClick={() => router.push("/gangs")} variant={"unstyled"}>
+              {currentGangId && (
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0, opacity: 0 }}
+                >
+                  <Button
+                    onClick={() => router.push("/gangs")}
+                    variant={"unstyled"}
+                    p={".25rem 1rem .25rem .25rem"}
+                    bg={"white"}
+                    height={"auto"}
+                    borderRadius={"full"}
+                    flexDir={"row"}
+                    display={"flex"}
+                    gap={".5rem"}
+                  >
                     <Image
-                      src={GANGS.filter(({ id }) => id === currentGang)[0].image}
-                      w={"3rem"}
+                      src={GANGS.filter(({ id }) => id === currentGangId)[0].image}
+                      w={"2rem"}
                     ></Image>
+                    <Text color={"black"} fontWeight={"bold"}>
+                      {GANGS.filter(({ id }) => id === currentGangId)[0].name}
+                    </Text>
                   </Button>
-                )}
-              </motion.div>
+                </motion.div>
+              )}
             </AnimatePresence>
           </Flex>
         </Flex>

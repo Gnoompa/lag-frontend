@@ -132,7 +132,7 @@ export default function Page() {
                       onClick={() => onJoinGangButtonClick(gang)}
                       isLoading={process.includes(EProcess.settingCurrentGang) || !ready}
                     >
-                      GET IN
+                      GANG IN
                     </Button>
                   </Container>
                 </motion.div>
