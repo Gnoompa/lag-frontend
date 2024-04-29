@@ -39,8 +39,8 @@ export default function Providers(props: AppProps) {
       <PrivyProvider
         appId="cltsh2wbj0161vzdwrozpkglu"
         config={{
-          supportedChains: [mantle],
-          defaultChain: mantle,
+          supportedChains: [mainnet],
+          defaultChain: mainnet,
           // @ts-ignore
           loginMethods: ["email", ...(global.Telegram?.WebApp.initData ? [] : ["wallet"])],
           appearance: {
