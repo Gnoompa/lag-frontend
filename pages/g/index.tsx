@@ -58,6 +58,7 @@ export default function Page() {
   } = useArweave(user?.wallet?.address);
 
   const [persistedPlayerState, setPersistedPlayerState] = useAtom(persistedPlayerStateAtom);
+  // const persistedPlayerState = {}
   const [arContractState, setArContractState] = useAtom(arContractStateAtom);
 
   // @ts-ignore
@@ -220,7 +221,7 @@ export default function Page() {
           gap={"1.5rem"}
           alignItems={"center"}
           pos={"absolute"}
-          bottom={"1rem"}
+          bottom={"10vh"}
           zIndex={1}
         >
           <AnimatePresence>
