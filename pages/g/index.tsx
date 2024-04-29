@@ -215,13 +215,13 @@ export default function Page() {
 
   return (
     <Flex width={"100%"} flexDirection={"column"} alignItems={"center"} padding={"1rem"}>
-      <Flex flexDir={"column"} gap={"1rem"} w={"100%"} mt={"2rem"} alignItems={"center"}>
+      <Flex flexDir={"column"} gap={"1rem"} w={"100%"} height={"calc(100svh - 2rem)"} pos={"relative"} alignItems={"center"}>
         <Flex
           flexDir={"column"}
           gap={"1.5rem"}
           alignItems={"center"}
-          pos={"absolute"}
-          bottom={"10vh"}
+          pos={"absolute"}          
+          bottom={"2rem"}
           zIndex={1}
         >
           <AnimatePresence>
