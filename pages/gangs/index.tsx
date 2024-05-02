@@ -7,11 +7,11 @@ import { ERC20_TOKENS } from "@/const";
 import { IGang } from "@/typings";
 import { motion, AnimatePresence } from "framer-motion";
 import useArweave from "@/features/useArweave";
-import { without } from "lodash";
+import { sortBy, without } from "lodash";
 import { usePrivy } from "@privy-io/react-auth";
 import useWallet from "@/features/useWallet";
-import { useAtom } from "jotai";
-import { persistedPlayerStateAtom } from "@/state";
+import { useAtom, useAtomValue } from "jotai";
+import { persistedGlobalScoreAtom, persistedPlayerStateAtom } from "@/state";
 
 export enum EStage {
   initial,
@@ -33,19 +33,25 @@ export default function Page() {
   const [stage, setStage] = useState<EStage>(EStage.initial);
 
   const [allGangs, setAllGangs] = useState<IGang[]>([]);
+  const persistedGlobalScore = useAtomValue(persistedGlobalScoreAtom);
   const [persistedPlayerState, setPersistedPlayerState] = useAtom(persistedPlayerStateAtom);
   const canGangIn = ready && user?.wallet?.address && authenticated && arReady;
 
   useEffect(() => {
-    setAllGangs(
-      ERC20_TOKENS.map((token) => ({
-        image: token.image,
-        name: token.label,
-        score: 0,
-        id: token.id,
-      }))
-    );
-  }, []);
+    persistedGlobalScore &&
+      setAllGangs(
+        sortBy(
+          ERC20_TOKENS.map((token) => ({
+            image: token.image,
+            name: token.label,
+            // @ts-ignore
+            score: persistedGlobalScore[token.id] || 0,
+            id: token.id,
+          })),
+          "score"
+        )
+      );
+  }, [persistedGlobalScore]);
 
   useEffect(() => {
     ready &&
@@ -64,7 +70,7 @@ export default function Page() {
       login();
 
       return;
-    }    
+    }
 
     if (!arReady) {
       auth(user?.wallet?.address, signFn!);
@@ -123,7 +129,10 @@ export default function Page() {
                     justifyContent={"space-between"}
                     alignItems={"center"}
                   >
-                    <Flex alignItems={"center"} gap={"1rem"}>
+                    <Flex alignItems={"center"} gap={".5rem"}>
+                      <Text color={"black"} fontWeight={"bold"} fontSize={"1.25rem"}>
+                        #{gangIndex + 1}
+                      </Text>
                       <Image
                         src={gang.image}
                         fallback={

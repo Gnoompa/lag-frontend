@@ -6,12 +6,15 @@ export const theme = extendTheme({
         initialColorMode: 'dark',
         useSystemColorMode: false,
     },
+    fonts: {
+        body: '"KoHo", sans-serif',
+    },
     styles: {
         global: {
             'html, body': {
                 background: "black",
                 minHeight: "100vh"
-            },
+            },           
         },
     },
     semanticTokens: {
@@ -21,7 +24,7 @@ export const theme = extendTheme({
         }
     },
     components: {
-        Button: {            
+        Button: {
             variants: {
                 accent: {
                     bg: "white",

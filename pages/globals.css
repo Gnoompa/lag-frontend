@@ -1,82 +1,28 @@
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-  --primaryColor: "#53FFD8";
-  --secondaryColor: "#02B1AA";
+:root {  
   font-family: "KoHo", sans-serif;
   font-weight: 400;
   font-style: normal;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
+.bubblemapItem:before {
+  content: "";
+  position: absolute;
+  top: 1%;
+  left: 5%;
+  width: 90%;
+  height: 90%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 0px, #ffffff, rgba(255, 255, 255, 0) 58%);
+  -webkit-filter: blur(5px);
+  z-index: 2;
 }
-
-h1,h2,h3,p,div {
-  font-family: "KoHo", sans-serif !important;
-  font-weight: 400;
-  font-style: normal;
+.bubblemapItem:after {
+  content: "";
+  position: absolute;
+  border-radius: 100%;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: radial-gradient(circle at 50% 30%, rgba(245, 237, 48, 0), rgba(200, 190, 20, 0.2) 50%, #575300 100%);
 }
-
-body {
-  margin: 0;
-  /* color: rgb(var(--foreground-rgb)); */
- /* background: url('/bg.png') 0 0 / cover no-repeat; */
-    
-      font-family: "KoHo", sans-serif;
-      font-weight: 400;
-      font-style: normal;
-    
-}
-
-:root {
-  --bar-fill: #57e705;
-  --bar-top: #6aff03;
-  --pixel-size: 7;
-}
-
-/* body {
-  background: #070606;
-} */
-
-.healthbar {
-  width: calc(38px * var(--pixel-size));
-  margin: 0 auto calc(2px * var(--pixel-size)) auto;
-  display: block;
-}
-
-.healthbar_fill {   
-  fill: var(--bar-fill);
-  transition: width 0.1s ease-in, fill 0.2s linear;
-}
-.healthbar_fill-top {
-  fill: var(--bar-top);
-}
-
-button {
-  cursor: pointer;
-  transition: .2s;
-}
-
-button:disabled {
-  opacity: .5;
-  cursor: not-allowed;
-}
-
-.accentText {  
-  background: linear-gradient(#53FFD8, #02B1AA);  
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-weight: bold;
-}
-
-.primaryButton:hover {
-  opacity: .7;
-}
-
-.spinner_9Mto{animation:spinner_5GqJ 1.6s linear infinite;animation-delay:-1.6s}.spinner_bb12{animation-delay:-1s}@keyframes spinner_5GqJ{12.5%{x:13px;y:1px}25%{x:13px;y:1px}37.5%{x:13px;y:13px}50%{x:13px;y:13px}62.5%{x:1px;y:13px}75%{x:1px;y:13px}87.5%{x:1px;y:1px}}

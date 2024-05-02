@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Button, Container, Flex, Image, Spinner, Text } from "@chakra-ui/react";
+import { Button, Flex, Image, Text } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import { motion, AnimatePresence } from "framer-motion";
 import useArweave from "@/features/useArweave";
@@ -19,7 +19,7 @@ import {
   persistedPlayerScoreAtom,
   persistedPlayerStateAtom,
 } from "@/state";
-import useBubbleMap, { TBubbleMapItems } from "@/features/useBubbleMap";
+import useBubbleMap from "@/features/useBubbleMap";
 import { ERC20_TOKENS, GANGS, MAX_SCORE_PER_MIN } from "@/const";
 import atomWithDebounce from "@/atoms/debouncedAtom";
 
@@ -38,9 +38,9 @@ export default function Page() {
     depleted,
   }
 
-  const [gangsMap, setGangsMap] = useState<TBubbleMapItems>();
+  const [gangsMap, setGangsMap] = useState<[]>();
 
-  const { htmlSvgElement, node, simulation } = useBubbleMap(gangsMap);
+  const bubbleMap = useBubbleMap(gangsMap);
 
   const [process, setProcess] = useState<EProcess[]>([]);
   const [stage, setStage] = useState<EStage>(EStage.initial);
@@ -89,10 +89,18 @@ export default function Page() {
   const [restoredEnergy, setRestoredEnergy] = useState(0);
 
   const checkinTimerInterval = useRef<any>();
+  const gangsMapRef = useRef<any>();
 
   useEffect(() => {
     setLocalEnergy(energy);
+    // setInterval(() =>
+    //   setGangsMap([...(gangsMapRef.current || []), { value: 20, image: "/bubble1.png" }]), 2000
+    // );
   }, []);
+
+  useEffect(() => {
+    gangsMapRef.current = gangsMap;
+  }, [gangsMap]);
 
   useEffect(() => {
     // @ts-ignore
@@ -143,9 +151,9 @@ export default function Page() {
     arReady && readState().then((value) => setArContractState(value?.cachedValue?.state as {}));
   }, [arReady]);
 
-  useEffect(() => {
-    return () => htmlSvgElement?.remove();
-  }, [htmlSvgElement]);
+  // useEffect(() => {
+  //   return () => htmlSvgElement?.remove();
+  // }, [htmlSvgElement]);
 
   useEffect(() => {
     ready && user?.wallet?.address && signFn && auth(user?.wallet?.address!, signFn);
@@ -215,27 +223,23 @@ export default function Page() {
 
   return (
     <Flex width={"100%"} flexDirection={"column"} alignItems={"center"} padding={"1rem"}>
-      <Flex flexDir={"column"} gap={"1rem"} w={"100%"} height={"calc(100svh - 2rem)"} pos={"relative"} alignItems={"center"}>
+      <Flex
+        flexDir={"column"}
+        gap={"1rem"}
+        w={"100%"}
+        height={"calc(100svh - 2rem)"}
+        pos={"relative"}
+        alignItems={"center"}
+      >
         <Flex
           flexDir={"column"}
           gap={"1.5rem"}
           alignItems={"center"}
-          pos={"absolute"}          
+          pos={"absolute"}
           bottom={"2rem"}
           zIndex={1}
         >
-          <AnimatePresence>
-            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} style={{ height: "3rem" }}>
-              {clientPlayerScore && (
-                <AnimatedCounter
-                  value={clientPlayerScore}
-                  color="#fff"
-                  fontSize="3rem"
-                ></AnimatedCounter>
-              )}
-            </motion.div>
-          </AnimatePresence>
-          <AnimatePresence>
+          {/* <AnimatePresence>
             {stage === EStage.initial && persistedPlayerState && currentGangId ? (
               <Flex gap={"1.5rem"}>
                 <motion.div
@@ -421,6 +425,17 @@ export default function Page() {
                 )}
               </motion.div>
             )}
+          </AnimatePresence> */}
+          <AnimatePresence>
+            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} style={{ height: "2rem" }}>
+              {clientPlayerScore && (
+                <AnimatedCounter
+                  value={clientPlayerScore}
+                  color="#fff"
+                  fontSize="2rem"
+                ></AnimatedCounter>
+              )}
+            </motion.div>
           </AnimatePresence>
           <Flex>
             <AnimatePresence>

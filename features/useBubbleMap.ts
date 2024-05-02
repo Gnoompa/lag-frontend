@@ -3,230 +3,164 @@
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 
-export type TBubbleMapItems = {
-  label: string;
+export type TNode = {
+  radius?: any;
+  index?: number;
+  label?: string;
   value: number;
-  image: string;
-}[];
+  image?: string;
+  poppable?: boolean
+};
 
-export interface ITransform {
-  x?: number;
-  y?: number;
-  smoothingFactor?: number;
+export interface ISettings {
+  width?: string;
+  height?: string;
+  spacing?: string;
+  style?: string;
 }
 
-export default function useBubbleMap(items: TBubbleMapItems | undefined, transform?: ITransform) {
-  const smoothingFactor = 0.01;
-  const width = global.innerWidth;
-  const height = global.innerHeight;
-  const sizeDivisor = 2.5;
-  const nodePadding = 3;
-  const MIN_BUBBLE_RAD = 50
+export default function useBubbleMap(nodes: TNode[] | undefined, settings: ISettings = {}) {
+  const [simulation, setSimulation] = useState<d3.Simulation<TNode, undefined>>();
+  const [svg, setSvg] = useState<d3.Selection<d3.BaseType, unknown, HTMLElement, any>>();
+  const [nodeSelection, setNodeSelection] =
+    useState<d3.Selection<SVGGElement, unknown, HTMLElement, any>>();
 
-  const [mapItems, setMapItems] = useState<[]>();
-  const [simulation, setSimulation] = useState<{}>();
-  const [node, setNode] = useState<{}>();
-  const [htmlSvgElement, setHtmlSvgElement] = useState<SVGElement>();
-
-  const transformForceY = useRef(transform?.y);
-  const transformInterval = useRef<any>();
+  const simRef = useRef<any>();
+  const svgRef = useRef<any>();
+  const nodesRef = useRef<any>();
+  const nodeSelectionRef = useRef<d3.Selection<SVGGElement, unknown, HTMLElement, any>>();
 
   useEffect(() => {
-    node &&
-      transform &&
-      !transformInterval.current &&
-      (transformInterval.current = setInterval(() => smoothTransformation(transform), 10));
-  }, [node, transform]);
+    nodesRef.current = nodes?.map((node, index) => ({ ...node, index, radius: 30 }));
 
-  useEffect(() => {
     // @ts-ignore
-    global.bubblemap && global.bubblemap.remove();
-  }, []);
+    nodes && render(nodesRef.current);
+  }, [nodes]);
 
   useEffect(() => {
-    items && initMap(items);
-  }, [items]);
+    setInterval(() => (nodesRef.current?.push({ radius: 21, poppable: true, index: nodesRef.current.length, image: `/bubble${~~((Math.random()) * 3) + 1}.png` }), render()), 2000)
+  }, [])
 
-  const smoothTransformation = (transform: ITransform) => {
-    // @ts-ignore
-    if (Math.abs(transformForceY.current || 0) >= Math.abs((transform.y || 0) * node.size())) {
-      clearInterval(transformInterval.current);
+  const render = () => {
+    const svg = getSvg();
+    const nodeSelection = getNodeSelection(svg);
+    const sim = getSimulation(nodesRef.current, nodeSelection);
 
-      transformInterval.current = undefined;
+    renderNodes();
 
-      return;
-    }
+    sim!.nodes(nodesRef.current);
+    sim!.alpha(1).restart();
 
-    // @ts-ignores
-    node?.attr("y", (d) => d.y - d.radius + (transformForceY.current || 0) * ((d.index + 1) / 1.5));
+    svg.property("value", {
+      // @ts-ignore
+      nodes: nodesRef.current.map((d) => ({ id: d.index })),
+    });
 
-    transform.y !== undefined &&
-      (transformForceY.current =
-        (transformForceY.current || 0) + (transform?.y || 0) * smoothingFactor);
+    svg.dispatch("input");
   };
 
-  const initMap = (items: TBubbleMapItems) => {
-    // @ts-ignore
-    if (global.bubblemap) {
-      return;
+  const getSvg = () => {
+    if (svgRef.current) {
+      return svgRef.current;
     }
 
-    var svg = d3
+    const [width, height] = [
+      settings.width || window.innerWidth,
+      settings.height || window.innerHeight,
+    ];
+
+    svgRef.current = d3
       .select("body")
       .append("svg")
+      .property("value", { nodes: [] })
       .attr("width", width)
       .attr("height", height)
-      .attr("style", "position: fixed; top: 0;")
-      .attr("id", "bubblemap");
+      .attr("id", "_bubblemap")
+      .attr("style", settings.style || "position: fixed; top: 0; left:0;")
+      .attr("viewBox", [-width / 2, -height / 2, width, height]);
 
-    // @ts-ignore
-    setHtmlSvgElement(global.bubblemap);
+    return svgRef.current;
+  };
 
-    var simulation = d3
-      .forceSimulation()
-      .force(
-        "forceX",
-        d3
-          .forceX()
-          .strength(0.1)
-          .x(width * 0.5)
-      )
-      .force(
-        "forceY",
-        d3
-          .forceY()
-          .strength(0.1)
-          .y(height * 0.5)
-      )
-      .force(
-        "center",
-        d3
-          .forceCenter()
-          .x(width * 0.5)
-          .y(height * 0.25)
-      )
-      .force("charge", d3.forceManyBody().strength(-15));
+  const getSimulation = (nodes: TNode[], node: any) => {
+    if (simRef.current) {
+      return simRef.current;
+    }
 
-    // sort the nodes so that the bigger ones are at the back
-    var graph = items
-      .map(types)
-      .sort(function (a: { size: number }, b: { size: number }) {
-        return b.size - a.size;
-      });
-
-    //update the simulation based on the data
-    simulation
-      .nodes(graph)
+    simRef.current = d3
+      // @ts-ignore
+      .forceSimulation(nodes)
+      // .force("charge", d3.forceManyBody().strength(-15))
+      // .force(
+      //   "collide",
+      //   d3
+      //     .forceCollide()
+      //     .strength(0.5)
+      //     // @ts-ignore
+      //     .radius((d) => d.radius! + 6)
+      //     .iterations(1)
+      // )
+      .force("charge", d3.forceManyBody().strength(-60))
       .force(
         "collide",
         d3
           .forceCollide()
-          .strength(0.5)
-          .radius(function (d) {
-            //@ts-ignore
-            return d.radius + nodePadding;
-          })
-          .iterations(1)
+          // @ts-ignore
+          .radius((d) => d.radius + 6)
+          .iterations(3)
       )
-      .on("tick", () => {
-        node
-          .attr("x", function (d) {
-            // @ts-ignore
-            return d.x - d.radius;
-          })
-          .attr("y", function (d) {
-            // @ts-ignore
-            return d.y - d.radius + (transformForceY.current || 0) * ((d.index + 1) / 1.5);
-          });
-      });
-
-    setSimulation(simulation);
-
-    var node = svg
-      .append("g")
-      .attr("class", "node")
-      .selectAll("image")
-      .data(graph)
-      .enter()
-      .append("image")
-      // @ts-ignore
-      .attr("xlink:href", (d) => d.image)
-      .attr("width", function (d) {
+      .force("x", d3.forceX())
+      .force("y", d3.forceY())
+      .on("tick", () => nodeSelectionRef.current!
         // @ts-ignore
-        return d.radius * 2;
-      })
-      .attr("height", function (d) {
+        .attr("x", (d) => d.x || 0 - d.radius)
         // @ts-ignore
-        return d.radius * 2;
-      })
-      .attr("x", function (d) {
-        // @ts-ignore
-        return d.x;
-      })
-      .attr("y", function (d) {
-        // @ts-ignore
-        return d.y;
-      })
-      .attr("clip-path", "inset(0% round 9999px)")
-      .attr("preserveAspectRatio", "xMidYMid slice")
-      // @ts-ignore
-      .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
+        .attr("y", (d) => d.y || 0 - d.radius)
+      );
 
-    setNode(node);
-
-    // @ts-ignore
-    function dragstarted(e, d) {
-      // @ts-ignore
-      if (!e.active) simulation.alphaTarget(0.03).restart();
-      d.x = e.x;
-      d.y = e.y;
-    }
-
-    // @ts-ignore
-    function dragged(e, d) {
-      // @ts-ignore
-      d.x = e.x;
-      // @ts-ignore
-      d.y = e.y;
-    }
-    // @ts-ignore
-    function dragended(d, e) {
-      // @ts-ignore
-      if (!e.active) simulation.alphaTarget(0.03);
-      d.fx = null;
-      d.fy = null;
-    }
+    return simRef.current;
   };
 
-  // @ts-ignore
-  function types(d) {
-    d.gdp = +d.value;
-    d.size = +d.value / sizeDivisor;
-    d.size < MIN_BUBBLE_RAD ? (d.radius = MIN_BUBBLE_RAD) : (d.radius = d.size);
-    return d;
-  }
+  const getNodeSelection = (svg: any) => {
+    return (
+      nodeSelectionRef.current || (nodeSelectionRef.current = svg.append("g").selectAll("circle"))
+    );
+  };
 
-  // @ts-ignore
-  function updateNodeSize(d, value: number) {
-    d.size = value / sizeDivisor, d.radius = d.size < MIN_BUBBLE_RAD ? MIN_BUBBLE_RAD : d.size;
-  }
-
-  // const transformMapItems = (node: {}, transform: ITransform) => {
-  //     console.log(node, transform)
-  //     // @ts-ignore
-  //     transform.y !== undefined && node
-  //         // @ts-ignore
-  //         .attr("y", function (d) {
-  //             // @ts-ignore
-  //             return d.y - d.radius - transform.y;
-  //         });
-  // }
+  const renderNodes = () => {
+    // @ts-ignore
+    nodeSelectionRef.current = nodeSelectionRef
+      .current!.data(nodesRef.current)
+      .join(
+        (enter) =>
+          enter
+            .append("image")
+            .attr("href", (d) => d.image!)
+            .attr("width", 0)
+            .attr("clip-path", "inset(0% round 9999px)")
+            .attr("preserveAspectRatio", "xMidYMid slice")
+            .call((enter) =>
+              enter
+                .transition()
+                .delay((d, i) => i * 50)
+                .attr("width", (d) => d.radius * 2)
+            )
+            .on(
+              "click",
+              (d, a) =>
+                a.poppable &&
+                (nodesRef.current = nodesRef.current.filter((node) => node.index !== a.index), render())
+            ),
+        (update) => update,
+        (exit) => exit.transition().style("transform", "scale(.8)").style("opacity", 0).remove()
+      )
+      // @ts-ignore
+      .attr("x", (d) => d.x || 0 - d.radius)
+      // @ts-ignore
+      .attr("y", (d) => d.y || 0 - d.radius);
+  };
 
   return {
-    htmlSvgElement,
-    updateNodeSize,
-    node,
-    simulation,
-    initMap
+    render,
   };
 }

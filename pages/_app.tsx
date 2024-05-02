@@ -1,6 +1,6 @@
 "use client";
 
-import "./globals.css";
+// import "./globals.css";
 import { PrivyProvider } from "@privy-io/react-auth";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, PropsWithChildren } from "react";
