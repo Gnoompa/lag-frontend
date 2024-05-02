@@ -135,6 +135,7 @@ export default function useBubbleMap(nodes: TNode[] | undefined, settings: ISett
         (enter) =>
           enter
             .append("image")
+            // @ts-ignore
             .attr("href", (d) => d.image!)
             .attr("width", 0)
             .attr("clip-path", "inset(0% round 9999px)")
@@ -143,12 +144,15 @@ export default function useBubbleMap(nodes: TNode[] | undefined, settings: ISett
               enter
                 .transition()
                 .delay((d, i) => i * 50)
+                // @ts-ignore
                 .attr("width", (d) => d.radius * 2)
             )
             .on(
               "click",
               (d, a) =>
+                // @ts-ignore
                 a.poppable &&
+                // @ts-ignore
                 (nodesRef.current = nodesRef.current.filter((node) => node.index !== a.index), render())
             ),
         (update) => update,

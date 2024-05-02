@@ -19,7 +19,7 @@ import {
   persistedPlayerScoreAtom,
   persistedPlayerStateAtom,
 } from "@/state";
-import useBubbleMap from "@/features/useBubbleMap";
+import useBubbleMap, { TNode } from "@/features/useBubbleMap";
 import { ERC20_TOKENS, GANGS, MAX_SCORE_PER_MIN } from "@/const";
 import atomWithDebounce from "@/atoms/debouncedAtom";
 
@@ -38,7 +38,7 @@ export default function Page() {
     depleted,
   }
 
-  const [gangsMap, setGangsMap] = useState<[]>();
+  const [gangsMap, setGangsMap] = useState<TNode[]>();
 
   const bubbleMap = useBubbleMap(gangsMap);
 

@@ -40,7 +40,7 @@ export default function Page() {
     [stage]
   );
 
-  const { htmlSvgElement } = useBubbleMap(
+  const map = useBubbleMap(
     [
       ...ERC20_TOKENS,
       {
@@ -64,7 +64,7 @@ export default function Page() {
         value: 175,
       },
     ],
-    bubbleMapTransform
+    // bubbleMapTransform
   );
 
   useEffect(() => {
@@ -74,9 +74,9 @@ export default function Page() {
     global?.Telegram?.WebApp?.ready();
   }, []);
 
-  useEffect(() => {
-    return () => htmlSvgElement?.remove();
-  }, [htmlSvgElement]);
+  // useEffect(() => {
+  //   return () => htmlSvgElement?.remove();
+  // }, [htmlSvgElement]);
 
   useEffect(() => {
     stage === EStage.gangSelection && setTimeout(() => router.push("gangs"), 500);
