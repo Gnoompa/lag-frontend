@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import * as d3 from "d3";
+import { last, max, sortBy } from "lodash";
 
 export type TNode = {
   radius?: any;
@@ -9,37 +10,50 @@ export type TNode = {
   label?: string;
   value: number;
   image?: string;
-  poppable?: boolean
+  poppable?: boolean;
+  relativeSize?: number;
+  onPop?: () => void;
 };
 
 export interface ISettings {
-  width?: string;
-  height?: string;
-  spacing?: string;
+  width?: number;
+  height?: number;
+  spacing?: number;
   style?: string;
 }
 
 export default function useBubbleMap(nodes: TNode[] | undefined, settings: ISettings = {}) {
-  const [simulation, setSimulation] = useState<d3.Simulation<TNode, undefined>>();
-  const [svg, setSvg] = useState<d3.Selection<d3.BaseType, unknown, HTMLElement, any>>();
-  const [nodeSelection, setNodeSelection] =
-    useState<d3.Selection<SVGGElement, unknown, HTMLElement, any>>();
-
   const simRef = useRef<any>();
   const svgRef = useRef<any>();
   const nodesRef = useRef<any>();
   const nodeSelectionRef = useRef<d3.Selection<SVGGElement, unknown, HTMLElement, any>>();
 
   useEffect(() => {
-    nodesRef.current = nodes?.map((node, index) => ({ ...node, index, radius: 30 }));
+    nodesRef.current = nodes?.map((node, index) => ({
+      ...node,
+      index,
+      radius: _getRelativeBubbleSize(nodes, node),
+    }));
 
-    // @ts-ignore
-    nodes && render(nodesRef.current);
+    nodes && render();
   }, [nodes]);
 
-  useEffect(() => {
-    setInterval(() => (nodesRef.current?.push({ radius: 21, poppable: true, index: nodesRef.current.length, image: `/bubble${~~((Math.random()) * 3) + 1}.png` }), render()), 2000)
-  }, [])
+  const _getRelativeBubbleSize = (nodes: TNode[], node: TNode) => {
+    return max([
+      node.relativeSize
+        ? window.innerWidth * node.relativeSize
+        : node.value *
+        (window.innerWidth /
+          (3 * 2) /
+          last(
+            sortBy(
+              nodes.filter(({ relativeSize }) => !relativeSize),
+              "value"
+            )
+          )?.value!),
+      10,
+    ]);
+  };
 
   const render = () => {
     const svg = getSvg();
@@ -69,9 +83,8 @@ export default function useBubbleMap(nodes: TNode[] | undefined, settings: ISett
       settings.height || window.innerHeight,
     ];
 
-    svgRef.current = d3
-      .select("body")
-      .append("svg")
+    svgRef.current = (svgRef.current ? svgRef.current : d3.select("body")
+      .append("svg"))
       .property("value", { nodes: [] })
       .attr("width", width)
       .attr("height", height)
@@ -90,32 +103,23 @@ export default function useBubbleMap(nodes: TNode[] | undefined, settings: ISett
     simRef.current = d3
       // @ts-ignore
       .forceSimulation(nodes)
-      // .force("charge", d3.forceManyBody().strength(-15))
-      // .force(
-      //   "collide",
-      //   d3
-      //     .forceCollide()
-      //     .strength(0.5)
-      //     // @ts-ignore
-      //     .radius((d) => d.radius! + 6)
-      //     .iterations(1)
-      // )
-      .force("charge", d3.forceManyBody().strength(-60))
+      .force("charge", d3.forceManyBody().strength(-15))
       .force(
         "collide",
         d3
           .forceCollide()
           // @ts-ignore
-          .radius((d) => d.radius + 6)
+          .radius((d) => d.radius + 5)
           .iterations(3)
       )
       .force("x", d3.forceX())
       .force("y", d3.forceY())
-      .on("tick", () => nodeSelectionRef.current!
-        // @ts-ignore
-        .attr("x", (d) => d.x || 0 - d.radius)
-        // @ts-ignore
-        .attr("y", (d) => d.y || 0 - d.radius)
+      .on("tick", () =>
+        nodeSelectionRef
+          .current! // @ts-ignore
+          .attr("x", (d) => (d.x || 0) - d.radius)
+          // @ts-ignore
+          .attr("y", (d) => (d.y || 0) - d.radius)
       );
 
     return simRef.current;
@@ -137,15 +141,18 @@ export default function useBubbleMap(nodes: TNode[] | undefined, settings: ISett
             .append("image")
             // @ts-ignore
             .attr("href", (d) => d.image!)
-            .attr("width", 0)
+            // @ts-ignore
+            .style("width", (d) => d.radius * 2)
+            .style("transform", "scale(0)")
             .attr("clip-path", "inset(0% round 9999px)")
             .attr("preserveAspectRatio", "xMidYMid slice")
             .call((enter) =>
               enter
                 .transition()
-                .delay((d, i) => i * 50)
                 // @ts-ignore
-                .attr("width", (d) => d.radius * 2)
+                .delay((d, i) => (d.relativeSize ? 0 : i * 50))
+                // @ts-ignore
+                .style("transform", "scale(1)")
             )
             .on(
               "click",
@@ -153,7 +160,10 @@ export default function useBubbleMap(nodes: TNode[] | undefined, settings: ISett
                 // @ts-ignore
                 a.poppable &&
                 // @ts-ignore
-                (nodesRef.current = nodesRef.current.filter((node) => node.index !== a.index), render())
+                ((nodesRef.current = nodesRef.current.filter((node) => node.index !== a.index)),
+                  // @ts-ignore
+                  a.onPop?.(a),
+                  render())
             ),
         (update) => update,
         (exit) => exit.transition().style("transform", "scale(.8)").style("opacity", 0).remove()
@@ -164,7 +174,13 @@ export default function useBubbleMap(nodes: TNode[] | undefined, settings: ISett
       .attr("y", (d) => d.y || 0 - d.radius);
   };
 
+  const unmount = () => {
+    // @ts-ignore
+    global._bubblemap?.remove()
+  }
+
   return {
     render,
+    unmount
   };
 }
