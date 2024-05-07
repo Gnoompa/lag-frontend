@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Button, Flex, Image, Spinner } from "@chakra-ui/react";
+import { Button, Flex, Image, Spinner, Text } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import { motion, AnimatePresence } from "framer-motion";
 import useArweave from "@/features/useArweave";
@@ -88,6 +88,7 @@ export default function Page() {
 
   const checkinTimerInterval = useRef<any>();
   const gangsMapRef = useRef<any>();
+  const lastBubblePopTimestampRef = useRef<number>();
 
   const canPlay = authenticated && arReady;
 
@@ -197,27 +198,38 @@ export default function Page() {
     setInterval(
       () =>
         gangsMapRef.current.length < 10 &&
+        (lastBubblePopTimestampRef.current
+          ? Date.now() - lastBubblePopTimestampRef.current > 1000
+          : true) &&
         setGangsMap([
           ...(gangsMapRef.current || []),
           {
+            id: Date.now(),
             relativeSize: 0.1,
             poppable: true,
             image: `/bubble${~~(Math.random() * 2) + 1}.png`,
-            onPop: (node: TNode) => (
-              // @ts-ignore
-              setGangsMap((old) => without(old, old?.[node.index]) || []), pump()
-            ),
+            onPop: function (node: TNode) {
+              (lastBubblePopTimestampRef.current = +Date.now()),
+                // @ts-ignore
+                setGangsMap(
+                  without(
+                    gangsMapRef.current,
+                    gangsMapRef.current?.filter((_node: TNode) => _node.id == node.id)[0]
+                  ) || []
+                ),
+                pump();
+            },
           },
         ]),
-        // setTimeout(
-        //   () =>
-        //     setGangsMap((old) =>
-        //       old?.filter(({ poppable }, i) =>
-        //         poppable ? (i == old.length - 1 ? true : Math.random() > 0.5) : true
-        //       )
-        //     ),
-        //   1000
-        // )
+      // setTimeout(
+      //   () =>
+      //     setGangsMap((old) =>
+      //       old?.filter(({ poppable }, i) =>
+      //         poppable ? (i == old.length - 1 ? true : Math.random() > 0.5) : true
+      //       )
+      //     ),
+      //   1000
+      // )
       1000
     );
   };
@@ -492,19 +504,43 @@ export default function Page() {
                     </Text> */}
                   </Button>{" "}
                   <AnimatePresence>
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      style={{ height: "2rem" }}
-                    >
-                      {clientPlayerScore && (
-                        <AnimatedCounter
-                          value={clientPlayerScore}
-                          color="#fff"
-                          fontSize="2rem"
-                        ></AnimatedCounter>
-                      )}
-                    </motion.div>
+                    {clientPlayerScore && (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        // style={{ height: "2rem" }}
+                      >
+                        <Flex flexDir={"column"} gap={".25rem"} alignItems={"center"}>
+                          <AnimatedCounter
+                            value={clientPlayerScore}
+                            color="#fff"
+                            fontSize="2rem"
+                          ></AnimatedCounter>
+                          <Flex gap={".25rem"} alignItems={"center"}>
+                            <svg width="7" height="14" viewBox="0 0 7 14" fill="none">
+                              <path
+                                d="M6.80273 0.71582H2.16988L0.317383 7.71878L1.7072 8.49824L0.59532 13.6865H1.15134L6.52438 6.68327L4.79567 6.22837L6.80273 0.71582Z"
+                                fill="url(#paint0_linear_643_637)"
+                              />
+                              <defs>
+                                <linearGradient
+                                  id="paint0_linear_643_637"
+                                  x1="3.56006"
+                                  y1="0.71582"
+                                  x2="3.56006"
+                                  y2="13.6865"
+                                  gradientUnits="userSpaceOnUse"
+                                >
+                                  <stop stop-color="white" />
+                                  <stop offset="1" stop-color="#999999" />
+                                </linearGradient>
+                              </defs>
+                            </svg>
+                            <Text>{localEnergy!}</Text>
+                          </Flex>
+                        </Flex>
+                      </motion.div>
+                    )}
                   </AnimatePresence>
                   <Button
                     // onClick={() => router.push("/gangs")}

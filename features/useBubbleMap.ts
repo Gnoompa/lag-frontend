@@ -9,6 +9,7 @@ export type TNode = {
   index?: number;
   label?: string;
   value: number;
+  id: string | number;
   image?: string;
   poppable?: boolean;
   relativeSize?: number;
@@ -28,12 +29,15 @@ export default function useBubbleMap(nodes: TNode[] | undefined, settings: ISett
   const nodesRef = useRef<any>();
   const nodeSelectionRef = useRef<d3.Selection<SVGGElement, unknown, HTMLElement, any>>();
 
-  useEffect(() => {
-    nodesRef.current = nodes?.map((node, index) => ({
-      ...node,
-      index,
-      radius: _getRelativeBubbleSize(nodes, node),
-    }));
+  useEffect(() => {    
+    nodesRef.current = nodes?.map(
+      (node, index) =>
+        nodesRef.current?.filter((nodeRef: TNode) => nodeRef.id === node.id)[0] || {
+          ...node,
+          index,
+          radius: _getRelativeBubbleSize(nodes, node),
+        }
+    );
 
     nodes && render();
   }, [nodes]);
@@ -41,9 +45,9 @@ export default function useBubbleMap(nodes: TNode[] | undefined, settings: ISett
   const _getRelativeBubbleSize = (nodes: TNode[], node: TNode) => {
     return max([
       node.relativeSize
-        ? window.innerWidth * node.relativeSize
+        ? 500 * node.relativeSize
         : node.value *
-        (window.innerWidth /
+        (500 /
           (3 * 2) /
           last(
             sortBy(
@@ -51,7 +55,7 @@ export default function useBubbleMap(nodes: TNode[] | undefined, settings: ISett
               "value"
             )
           )?.value!),
-      10,
+      25,
     ]);
   };
 
@@ -83,8 +87,7 @@ export default function useBubbleMap(nodes: TNode[] | undefined, settings: ISett
       settings.height || window.innerHeight,
     ];
 
-    svgRef.current = (svgRef.current ? svgRef.current : d3.select("body")
-      .append("svg"))
+    svgRef.current = (svgRef.current ? svgRef.current : d3.select("body").append("svg"))
       .property("value", { nodes: [] })
       .attr("width", width)
       .attr("height", height)
@@ -159,11 +162,9 @@ export default function useBubbleMap(nodes: TNode[] | undefined, settings: ISett
               (d, a) =>
                 // @ts-ignore
                 a.poppable &&
-                // @ts-ignore
-                ((nodesRef.current = nodesRef.current.filter((node) => node.index !== a.index)),
-                  // @ts-ignore
-                  a.onPop?.(a),
-                  render())
+                // @ts-ignore                                
+                (a.onPop?.(a))
+                  // render())
             ),
         (update) => update,
         (exit) => exit.transition().style("transform", "scale(.8)").style("opacity", 0).remove()
@@ -176,11 +177,11 @@ export default function useBubbleMap(nodes: TNode[] | undefined, settings: ISett
 
   const unmount = () => {
     // @ts-ignore
-    global._bubblemap?.remove()
-  }
+    global._bubblemap?.remove();
+  };
 
   return {
     render,
-    unmount
+    unmount,
   };
 }
