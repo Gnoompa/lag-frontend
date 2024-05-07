@@ -9,7 +9,7 @@ export type TNode = {
   index?: number;
   label?: string;
   value: number;
-  id: string | number;
+  id?: string | number;
   image?: string;
   poppable?: boolean;
   relativeSize?: number;
