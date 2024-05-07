@@ -86,6 +86,7 @@ export default function Page() {
   const [localEnergy, setLocalEnergy] = useState<number>();
   const [restoredEnergy, setRestoredEnergy] = useState(0);
 
+  const energyRef = useRef<number>(energy);
   const checkinTimerInterval = useRef<any>();
   const gangsMapRef = useRef<any>();
   const lastBubblePopTimestampRef = useRef<number>();
@@ -105,6 +106,10 @@ export default function Page() {
   useEffect(() => {
     gangsMapRef.current = gangsMap;
   }, [gangsMap]);
+
+  useEffect(() => {
+    energyRef.current = energy;
+  }, [energy]);
 
   useEffect(() => {
     // @ts-ignore
@@ -132,8 +137,9 @@ export default function Page() {
   }, [persistedGlobalScore]);
 
   useEffect(() => {
-    setLocalEnergy(debouncedEnergy);
-  }, [debouncedEnergy]);
+    // console.log(debouncedEnergy);
+    setLocalEnergy(energy);
+  }, [energy]);
 
   useEffect(() => {
     debouncedScore && commitScore(debouncedScore);
@@ -162,7 +168,7 @@ export default function Page() {
   }, [ready, user, signFn]);
 
   useEffect(() => {
-    clientPlayerScore && (setEnergy(energy - 10), setDebouncedScore(clientPlayerScore));
+    clientPlayerScore && setDebouncedScore(clientPlayerScore);
   }, [clientPlayerScore]);
 
   const commitScore = (score: number) => {
@@ -209,6 +215,10 @@ export default function Page() {
             poppable: true,
             image: `/bubble${~~(Math.random() * 2) + 1}.png`,
             onPop: function (node: TNode) {
+              if (energyRef.current < 100) {
+                return;
+              }
+
               (lastBubblePopTimestampRef.current = +Date.now()),
                 // @ts-ignore
                 setGangsMap(
@@ -252,9 +262,9 @@ export default function Page() {
   };
 
   const pump = () => {
-    setClientPlayerScore((old) => (old || 0) + 10);
-    setEnergy((old) => old! - 10);
-    setLocalEnergy((old) => old! - 10);
+    setClientPlayerScore((old) => (old || 0) + 100);
+    setEnergy((old) => old! - 100);
+    setLocalEnergy((old) => old! - 100);
 
     // @ts-ignore
     global.Telegram?.WebApp?.HapticFeedback?.impactOccurred("light");
@@ -536,7 +546,7 @@ export default function Page() {
                                 </linearGradient>
                               </defs>
                             </svg>
-                            <Text>{localEnergy!}</Text>
+                            <Text>{Math.round(localEnergy!)}</Text>
                           </Flex>
                         </Flex>
                       </motion.div>

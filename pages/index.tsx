@@ -37,21 +37,25 @@ export default function Page() {
       ...ERC20_TOKENS,
       {
         label: "",
+        id: 1,
         image: "/banner1.svg",
         value: 200,
       },
       {
         label: "",
+        id: 2,
         image: "/banner2.svg",
         value: 125,
       },
       {
         label: "",
+        id: 3,
         image: "/banner3.svg",
         value: 150,
       },
       {
         label: "",
+        id: 4,
         image: "/banner4.svg",
         value: 175,
       },

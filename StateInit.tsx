@@ -87,7 +87,6 @@ export function State() {
   }, [arContractState]);
 
   useEffect(() => {
-    console.log(arContractState)
     ready &&
       arWallet &&
       arContractState &&
@@ -115,7 +114,7 @@ export function State() {
             min([
               oldEnergy + ENERGY_RESTORE_PER_SECOND > MAX_SCORE_PER_MIN
                 ? MAX_SCORE_PER_MIN
-                : ~~(oldEnergy + ENERGY_RESTORE_PER_SECOND),
+                : oldEnergy + ENERGY_RESTORE_PER_SECOND,
             ]) || MAX_SCORE_PER_MIN
         ),
       1000

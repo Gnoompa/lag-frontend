@@ -3,7 +3,7 @@ export const GENESIS_EPOCH_TIMESTAMP = 1711384626
 export const GAME_STAGES_DURATION = [60, 30, 30]
 
 export const MAX_SCORE_PER_MIN = 1_000;
-export const ENERGY_RESTORE_PER_SECOND = 1_000 / 60;
+export const ENERGY_RESTORE_PER_SECOND = 1_000 / 3600;
 
 export enum EGameStage {
     Active,

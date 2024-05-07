@@ -42,7 +42,7 @@ export default function useBubbleMap(nodes: TNode[] | undefined, settings: ISett
     nodes && render();
   }, [nodes]);
 
-  const _getRelativeBubbleSize = (nodes: TNode[], node: TNode) => {
+  const _getRelativeBubbleSize = (nodes: TNode[], node: TNode) => {  
     return max([
       node.relativeSize
         ? 500 * node.relativeSize
