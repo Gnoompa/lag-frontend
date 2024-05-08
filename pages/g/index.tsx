@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Button, Flex, Image, Spinner, Text } from "@chakra-ui/react";
+import { Button, Container, Flex, Image, Spinner, Text } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import { motion, AnimatePresence } from "framer-motion";
 import useArweave from "@/features/useArweave";
@@ -20,7 +20,7 @@ import {
   persistedPlayerStateAtom,
 } from "@/state";
 import useBubbleMap, { TNode } from "@/features/useBubbleMap";
-import { ERC20_TOKENS, GANGS, MAX_SCORE_PER_MIN } from "@/const";
+import { ENERGY_RESTORE_PER_SECOND, ERC20_TOKENS, GANGS, MAX_SCORE_PER_MIN } from "@/const";
 import atomWithDebounce from "@/atoms/debouncedAtom";
 
 const { debouncedValueAtom: debouncedScoreAtom, currentValueAtom: debouncedScoreAtomValue } =
@@ -202,44 +202,40 @@ export default function Page() {
 
   const startBubbleSpawning = () => {
     setInterval(
-      () =>
-        gangsMapRef.current.length < 10 &&
-        (lastBubblePopTimestampRef.current
-          ? Date.now() - lastBubblePopTimestampRef.current > 1000
-          : true) &&
-        setGangsMap([
-          ...(gangsMapRef.current || []),
-          {
-            id: Date.now(),
-            relativeSize: 0.1,
-            poppable: true,
-            image: `/bubble${~~(Math.random() * 2) + 1}.png`,
-            onPop: function (node: TNode) {
-              if (energyRef.current < 100) {
-                return;
-              }
+      () => {
+        const rnd = ~~(Math.random() * 3) + 1;
 
-              (lastBubblePopTimestampRef.current = +Date.now()),
-                // @ts-ignore
-                setGangsMap(
-                  without(
-                    gangsMapRef.current,
-                    gangsMapRef.current?.filter((_node: TNode) => _node.id == node.id)[0]
-                  ) || []
-                ),
-                pump();
+        gangsMapRef.current.length < 10 &&
+          (lastBubblePopTimestampRef.current
+            ? Date.now() - lastBubblePopTimestampRef.current > 1000
+            : true) &&
+          setGangsMap([
+            ...(gangsMapRef.current || []),
+            {
+              id: Date.now(),
+              relativeSize: 0.06,
+              value: [0, 10, 20, 100][rnd],
+              poppable: true,
+              image: `/candle${rnd}.png`,
+              onPop: function (node: TNode) {
+                if (energyRef.current < node.value) {
+                  return;
+                }
+
+                (lastBubblePopTimestampRef.current = +Date.now()),
+                  // @ts-ignore
+                  setGangsMap(
+                    without(
+                      gangsMapRef.current,
+                      gangsMapRef.current?.filter((_node: TNode) => _node.id == node.id)[0]
+                    ) || []
+                  ),
+                  pump(node.value);
+              },
             },
-          },
-        ]),
-      // setTimeout(
-      //   () =>
-      //     setGangsMap((old) =>
-      //       old?.filter(({ poppable }, i) =>
-      //         poppable ? (i == old.length - 1 ? true : Math.random() > 0.5) : true
-      //       )
-      //     ),
-      //   1000
-      // )
+          ]);
+      },
+
       1000
     );
   };
@@ -261,10 +257,10 @@ export default function Page() {
     navigator.clipboard.writeText(`${location.origin}/?i=${arWallet?.address}`);
   };
 
-  const pump = () => {
-    setClientPlayerScore((old) => (old || 0) + 100);
-    setEnergy((old) => old! - 100);
-    setLocalEnergy((old) => old! - 100);
+  const pump = (value: number = 100) => {
+    setClientPlayerScore((old) => (old || 0) + value);
+    setEnergy((old) => old! - value);
+    setLocalEnergy((old) => old! - value);
 
     // @ts-ignore
     global.Telegram?.WebApp?.HapticFeedback?.impactOccurred("light");
@@ -477,7 +473,7 @@ export default function Page() {
               </motion.div>
             )}
           </AnimatePresence>
-          <Flex w={"100%"} alignItems={"center"} justifyContent={"space-between"} px={"2rem"}>
+          <Flex w={"100%"} alignItems={"center"} justifyContent={"space-between"} px={".5rem"}>
             <AnimatePresence>
               {currentGangId && (
                 <motion.div
@@ -521,32 +517,30 @@ export default function Page() {
                         // style={{ height: "2rem" }}
                       >
                         <Flex flexDir={"column"} gap={".25rem"} alignItems={"center"}>
-                          <AnimatedCounter
-                            value={clientPlayerScore}
-                            color="#fff"
-                            fontSize="2rem"
-                          ></AnimatedCounter>
+                          <Flex gap={".5rem"} w={"100%"} justifyContent={"center"}>
+                            <AnimatedCounter
+                              value={clientPlayerScore}
+                              color="#28c300"
+                              fontSize="1.5rem"
+                            ></AnimatedCounter>
+                            <Container
+                              bg={"linear-gradient(180deg, #59FF30 0%, #44C324 100%)"}
+                              borderRadius={"md"}
+                              m={0}                              
+                              textAlign={"center"}
+                              w={"auto"}
+                            >
+                              <Text color={"black"} fontWeight={"medium"}>
+                                {currentGangId}
+                              </Text>
+                            </Container>
+                          </Flex>
+
                           <Flex gap={".25rem"} alignItems={"center"}>
-                            <svg width="7" height="14" viewBox="0 0 7 14" fill="none">
-                              <path
-                                d="M6.80273 0.71582H2.16988L0.317383 7.71878L1.7072 8.49824L0.59532 13.6865H1.15134L6.52438 6.68327L4.79567 6.22837L6.80273 0.71582Z"
-                                fill="url(#paint0_linear_643_637)"
-                              />
-                              <defs>
-                                <linearGradient
-                                  id="paint0_linear_643_637"
-                                  x1="3.56006"
-                                  y1="0.71582"
-                                  x2="3.56006"
-                                  y2="13.6865"
-                                  gradientUnits="userSpaceOnUse"
-                                >
-                                  <stop stop-color="white" />
-                                  <stop offset="1" stop-color="#999999" />
-                                </linearGradient>
-                              </defs>
-                            </svg>
-                            <Text>{Math.round(localEnergy!)}</Text>
+                            <Text fontWeight={"bold"}>
+                              Allowance {Math.round(localEnergy!)} (
+                              {ENERGY_RESTORE_PER_SECOND.toFixed(1)} p/s)
+                            </Text>
                           </Flex>
                         </Flex>
                       </motion.div>

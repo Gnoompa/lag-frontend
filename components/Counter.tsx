@@ -71,7 +71,7 @@ const NumberColumn = ({ digit, delta, fontSize, color, incrementColor, decrement
         style={{          
           position: "absolute",
           height: "1000%",
-          bottom: 0,
+          bottom: 0,          
         }}
       >
         {[9, 8, 7, 6, 5, 4, 3, 2, 1, 0].map((num) => (
@@ -81,7 +81,7 @@ const NumberColumn = ({ digit, delta, fontSize, color, incrementColor, decrement
                 fontWeight: "bold",
                 fontSize: fontSize,
                 lineHeight: fontSize,
-                color: color,
+                color: "#34ff00",
               }}
             >
               {num}
@@ -99,7 +99,7 @@ const NumberColumn = ({ digit, delta, fontSize, color, incrementColor, decrement
 export const AnimatedCounter = ({
   value = 0,
   fontSize = "18px",
-  color = "white",
+  color = "#28c300",
   incrementColor = "#32cd32",
   decrementColor = "#fe6862",
   includeDecimals = false,

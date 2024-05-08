@@ -29,7 +29,7 @@ export default function useBubbleMap(nodes: TNode[] | undefined, settings: ISett
   const nodesRef = useRef<any>();
   const nodeSelectionRef = useRef<d3.Selection<SVGGElement, unknown, HTMLElement, any>>();
 
-  useEffect(() => {    
+  useEffect(() => {
     nodesRef.current = nodes?.map(
       (node, index) =>
         nodesRef.current?.filter((nodeRef: TNode) => nodeRef.id === node.id)[0] || {
@@ -42,7 +42,7 @@ export default function useBubbleMap(nodes: TNode[] | undefined, settings: ISett
     nodes && render();
   }, [nodes]);
 
-  const _getRelativeBubbleSize = (nodes: TNode[], node: TNode) => {  
+  const _getRelativeBubbleSize = (nodes: TNode[], node: TNode) => {
     return max([
       node.relativeSize
         ? 500 * node.relativeSize
@@ -110,9 +110,9 @@ export default function useBubbleMap(nodes: TNode[] | undefined, settings: ISett
       .force(
         "collide",
         d3
-          .forceCollide()
+          .forceCollide()          
           // @ts-ignore
-          .radius((d) => d.radius + 5)
+          .radius((d) => d.radius + (d.poppable ? 20 : 5))
           .iterations(3)
       )
       .force("x", d3.forceX())
@@ -164,7 +164,7 @@ export default function useBubbleMap(nodes: TNode[] | undefined, settings: ISett
                 a.poppable &&
                 // @ts-ignore                                
                 (a.onPop?.(a))
-                  // render())
+              // render())
             ),
         (update) => update,
         (exit) => exit.transition().style("transform", "scale(.8)").style("opacity", 0).remove()
