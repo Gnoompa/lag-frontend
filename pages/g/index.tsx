@@ -266,6 +266,8 @@ export default function Page() {
     global.Telegram?.WebApp?.HapticFeedback?.impactOccurred("light");
   };
 
+  console.log(user)
+
   return (
     <Flex width={"100%"} flexDirection={"column"} alignItems={"center"} padding={"1rem"}>
       <Flex

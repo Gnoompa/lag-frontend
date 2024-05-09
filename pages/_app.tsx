@@ -42,7 +42,7 @@ export default function Providers(props: AppProps) {
           supportedChains: [mainnet],
           defaultChain: mainnet,
           // @ts-ignore
-          loginMethods: ["email", ...(global.Telegram?.WebApp.initData ? [] : ["wallet"])],
+          loginMethods: ["email", "twitter", ...(global.Telegram?.WebApp.initData ? [] : ["wallet"])],
           appearance: {
             theme: "#0E1111",
           },
