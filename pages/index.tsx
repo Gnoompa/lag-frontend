@@ -63,14 +63,23 @@ export default function Page() {
     []
   );
 
-  const map = useBubbleMap(bubbleMapItems, {height: global.innerHeight * .7});
+  const { render: renderBubblemap, unmount: removeBubblemap } = useBubbleMap(bubbleMapItems, {
+    height: global.innerHeight * 0.7,
+  });
 
   useEffect(() => {
     setTimeout(() => setStage(EStage.initial), 100);
 
     // @ts-ignore
     global?.Telegram?.WebApp?.ready();
+
+    console.log("enter");
+    // renderBubblemap();
+
+    return removeBubblemap;
   }, []);
+
+  // useEffect(() => {return () => console.log("exit") || removeBubblemap}, [removeBubblemap]);
 
   useEffect(() => {
     stage === EStage.gangSelection && setTimeout(() => router.push("gangs"), 500);

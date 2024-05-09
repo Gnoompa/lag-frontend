@@ -29,7 +29,7 @@ import {
   persistedPlayerScoreAtom,
   persistedPlayerStateAtom,
 } from "@/state";
-import useBubbleMap, { TNode } from "@/features/useBubbleMap";
+import { TNode } from "@/features/useBubbleMap";
 import { ENERGY_RESTORE_PER_SECOND, ERC20_TOKENS, GANGS, MAX_SCORE_PER_MIN } from "@/const";
 import atomWithDebounce from "@/atoms/debouncedAtom";
 
@@ -71,6 +71,10 @@ export default function Page() {
 
   // @ts-ignore
   const currentGangId = persistedPlayerState?.currentGuild;
+  const oppositeGangId = router.query.id;
+
+  const [currentGang, setCurrentGang] = useState<{ image: string }>();
+  const [oppositeGang, setOppositeGang] = useState<{ image: string }>();
 
   const [lastCheckin, setLastCheckin] = useState<number>();
 
@@ -103,19 +107,24 @@ export default function Page() {
 
   const canPlay = authenticated && arReady;
 
-  const { render, unmount } = useBubbleMap(gangsMap, {
-    height: global.innerHeight * (canPlay ? 0.7 : 0.8),
-  });
-
   useEffect(() => {
     setLocalEnergy(energy);
 
-    return unmount;
+    setGangsMap([
+      ...ERC20_TOKENS.map((token) => ({
+        ...token,
+        // @ts-ignore
+        // value: persistedGlobalScore[token.id] || token.value,
+      })),
+    ]);
   }, []);
 
   useEffect(() => {
     gangsMapRef.current = gangsMap;
-  }, [gangsMap]);
+
+    // @ts-ignore
+    gangsMap && setOppositeGang(gangsMap.filter(({ id }) => id == oppositeGangId)[0]);
+  }, [gangsMap, oppositeGangId]);
 
   useEffect(() => {
     energyRef.current = energy;
@@ -127,27 +136,21 @@ export default function Page() {
     // @ts-ignore
     setCheckinAmount(persistedPlayerState?.checkins?.[currentGangId]?.amount || 0);
     // @ts-ignore
-    persistedPlayerState?.score?.[currentGangId]?.score &&
-      setTimeout(
+    persistedPlayerState?.currentGuild &&
+      setCurrentGang(
         // @ts-ignore
-        () => setClientPlayerScore(persistedPlayerState?.score?.[currentGangId]?.score),
-        800
-      );
+        gangsMapRef.current.filter(({ id }) => id == persistedPlayerState?.currentGuild)[0]
+      ),
+      // @ts-ignore
+      persistedPlayerState?.score?.[currentGangId]?.score &&
+        setTimeout(
+          // @ts-ignore
+          () => setClientPlayerScore(persistedPlayerState?.score?.[currentGangId]?.score),
+          800
+        );
   }, [persistedPlayerState]);
 
   useEffect(() => {
-    persistedGlobalScore &&
-      setGangsMap([
-        ...ERC20_TOKENS.map((token) => ({
-          ...token,
-          // @ts-ignore
-          value: persistedGlobalScore[token.id] || token.value,
-        })),
-      ]);
-  }, [persistedGlobalScore]);
-
-  useEffect(() => {
-    // console.log(debouncedEnergy);
     setLocalEnergy(energy);
   }, [energy]);
 
@@ -208,53 +211,8 @@ export default function Page() {
     );
   };
 
-  const startBubbleSpawning = () => {
-    setInterval(
-      () => {
-        const rnd = ~~(Math.random() * 3) + 1;
-
-        gangsMapRef.current.length < 10 &&
-          (lastBubblePopTimestampRef.current
-            ? Date.now() - lastBubblePopTimestampRef.current > 1000
-            : true) &&
-          setGangsMap([
-            ...(gangsMapRef.current || []),
-            {
-              id: Date.now(),
-              relativeSize: 0.06,
-              value: [0, 10, 20, 100][rnd],
-              poppable: true,
-              image: `/candle${rnd}.png`,
-              onPop: function (node: TNode) {
-                if (energyRef.current < node.value) {
-                  return;
-                }
-
-                (lastBubblePopTimestampRef.current = +Date.now()),
-                  // @ts-ignore
-                  setGangsMap(
-                    without(
-                      gangsMapRef.current,
-                      gangsMapRef.current?.filter((_node: TNode) => _node.id == node.id)[0]
-                    ) || []
-                  ),
-                  pump(node.value);
-              },
-            },
-          ]);
-      },
-
-      1000
-    );
-  };
-
-  const checkin = () => {
-    setProcess([...process, EProcess.checkingIn]);
-
-    write({ function: "checkin", guild: currentGangId })
-      .then(() => (setLastCheckin(+Date.now() / 1000), setCheckinAmount(checkinAmount! + 1)))
-      .catch(() => alert("Oops, smth went wrong..."))
-      .finally(() => setProcess(without(process, EProcess.checkingIn)));
+  const beef = () => {
+    router.push("/beef");
   };
 
   const invite = () => {
@@ -265,11 +223,8 @@ export default function Page() {
     navigator.clipboard.writeText(`${location.origin}/?i=${arWallet?.address}`);
   };
 
-  const beef = () => {
-    router.push("/beef")
-  };
-
   const pump = (value: number = 100) => {
+    console.log(23)
     setClientPlayerScore((old) => (old || 0) + value);
     setEnergy((old) => old! - value);
     setLocalEnergy((old) => old! - value);
@@ -280,6 +235,60 @@ export default function Page() {
 
   return (
     <Flex width={"100%"} flexDirection={"column"} alignItems={"center"} padding={"1rem"}>
+      <Flex justifyContent={"center"}>
+        <AnimatePresence>
+          {currentGang && (
+            <motion.div
+              initial={{ y: 300, opacity: 0, scale: 0 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: -300, opacity: 0, scale: 0 }}
+              style={{ width: "100%", justifyContent: "center" }}
+            >
+              <Flex justify={"center"}>
+                <Image
+                  src={currentGang?.image}
+                  bottom={"10rem"}
+                  pos={"fixed"}
+                  width={["50vw", "min(100%, 15rem)"]}
+                  maxWidth={"45vh"}
+                ></Image>
+              </Flex>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {oppositeGang && (
+            <motion.div
+              initial={{ y: 300, opacity: 0, scale: 0 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: -300, opacity: 0, scale: 0 }}
+              style={{ width: "100%", justifyContent: "center" }}
+            >
+              <Flex justify={"center"}>
+                <Image
+                  src={oppositeGang?.image}
+                  top={"3rem"}
+                  pos={"fixed"}
+                  width={["50vw", "min(100%, 15rem)"]}
+                  maxWidth={"45vh"}
+                ></Image>
+              </Flex>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <span
+          onMouseDown={() => pump()}
+          style={{
+            userSelect: "none",
+            position: "fixed",
+            width: "100%",
+            height: "100vh",
+            bottom: 0,
+            zIndex: 1
+          }}
+        ></span>
+      </Flex>
       <Flex
         flexDir={"column"}
         gap={"1rem"}
@@ -548,12 +557,12 @@ export default function Page() {
                             </Container>
                           </Flex>
 
-                          {/* <Flex gap={".25rem"} alignItems={"center"}>
+                          <Flex gap={".25rem"} alignItems={"center"}>
                             <Text fontWeight={"bold"}>
-                              Allowance {Math.round(localEnergy!)} (
+                              Energy {Math.round(localEnergy!)} (
                               {ENERGY_RESTORE_PER_SECOND.toFixed(1)} p/s)
                             </Text>
-                          </Flex> */}
+                          </Flex>
                         </Flex>
                       </motion.div>
                     )}
