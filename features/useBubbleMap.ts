@@ -48,23 +48,26 @@ export default function useBubbleMap(nodes: TNode[] | undefined, settings: ISett
       node.relativeSize
         ? 500 * node.relativeSize
         : node.value *
-          (500 /
-            (3 * 2) /
-            last(
-              sortBy(
-                nodes.filter(({ relativeSize }) => !relativeSize),
-                "value"
-              )
-            )?.value!),
+        (500 /
+          (3 * 2) /
+          last(
+            sortBy(
+              nodes.filter(({ relativeSize }) => !relativeSize),
+              "value"
+            )
+          )?.value!),
       25,
     ]);
   };
 
   const render = () => {
+    if (!nodesRef.current) {
+      return
+    }
+
     const svg = getSvg();
-    console.log(svg);
-    const nodeSelection = getNodeSelection(svg);
-    const sim = getSimulation(nodesRef.current, nodeSelection);
+    const nodeSelection = svg && getNodeSelection(svg);
+    const sim = nodeSelection && nodesRef.current && getSimulation(nodesRef.current, nodeSelection);
 
     renderNodes();
 

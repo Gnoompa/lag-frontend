@@ -11,6 +11,7 @@ import {
   MenuList,
   Spinner,
   Text,
+  useBoolean,
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import { motion, AnimatePresence } from "framer-motion";
@@ -100,6 +101,8 @@ export default function Page() {
   const [localEnergy, setLocalEnergy] = useState<number>();
   const [restoredEnergy, setRestoredEnergy] = useState(0);
 
+  const [scoreAnimationToggle, setScoreAnimationToggle] = useBoolean();
+
   const energyRef = useRef<number>(energy);
   const checkinTimerInterval = useRef<any>();
   const gangsMapRef = useRef<any>();
@@ -137,18 +140,23 @@ export default function Page() {
     setCheckinAmount(persistedPlayerState?.checkins?.[currentGangId]?.amount || 0);
     // @ts-ignore
     persistedPlayerState?.currentGuild &&
+      // @ts-ignore
+      persistedPlayerState?.score?.[currentGangId]?.score &&
+      setTimeout(
+        // @ts-ignore
+        () => setClientPlayerScore(persistedPlayerState?.score?.[currentGangId]?.score),
+        800
+      );
+  }, [persistedPlayerState]);
+
+  useEffect(() => {
+    gangsMap &&
+      persistedPlayerState &&
       setCurrentGang(
         // @ts-ignore
         gangsMapRef.current.filter(({ id }) => id == persistedPlayerState?.currentGuild)[0]
-      ),
-      // @ts-ignore
-      persistedPlayerState?.score?.[currentGangId]?.score &&
-        setTimeout(
-          // @ts-ignore
-          () => setClientPlayerScore(persistedPlayerState?.score?.[currentGangId]?.score),
-          800
-        );
-  }, [persistedPlayerState]);
+      );
+  }, [persistedPlayerState, gangsMap]);
 
   useEffect(() => {
     setLocalEnergy(energy);
@@ -223,8 +231,13 @@ export default function Page() {
     navigator.clipboard.writeText(`${location.origin}/?i=${arWallet?.address}`);
   };
 
-  const pump = (value: number = 100) => {
-    console.log(23)
+  const pump = (value: number = 30) => {
+    if (energy < value) {
+      return;
+    }
+
+    setScoreAnimationToggle.toggle();
+
     setClientPlayerScore((old) => (old || 0) + value);
     setEnergy((old) => old! - value);
     setLocalEnergy((old) => old! - value);
@@ -246,6 +259,10 @@ export default function Page() {
             >
               <Flex justify={"center"}>
                 <Image
+                  style={{
+                    transition: ".2s",
+                    transform: `scale(${scoreAnimationToggle ? 1 : 1.1})`,
+                  }}
                   src={currentGang?.image}
                   bottom={"10rem"}
                   pos={"fixed"}
@@ -267,6 +284,10 @@ export default function Page() {
             >
               <Flex justify={"center"}>
                 <Image
+                  style={{
+                    transition: ".2s",
+                    transform: `scale(${scoreAnimationToggle ? 1.1 : 1})`,
+                  }}
                   src={oppositeGang?.image}
                   top={"3rem"}
                   pos={"fixed"}
@@ -285,7 +306,7 @@ export default function Page() {
             width: "100%",
             height: "100vh",
             bottom: 0,
-            zIndex: 1
+            zIndex: 1,
           }}
         ></span>
       </Flex>

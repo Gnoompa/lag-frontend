@@ -1,7 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Container, Flex, Image, Text, Button } from "@chakra-ui/react";
+import {
+  Container,
+  Flex,
+  Image,
+  Text,
+  Button,
+  Spinner,
+  Accordion,
+  AccordionItem,
+  AccordionButton,
+  AccordionPanel,
+} from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import { ERC20_TOKENS } from "@/const";
 import { IGang } from "@/typings";
@@ -33,9 +44,16 @@ export default function Page() {
   const [stage, setStage] = useState<EStage>(EStage.initial);
 
   const [allGangs, setAllGangs] = useState<IGang[]>([]);
+  const [currentGuildId, setCurrentGuildId] = useState<string>();
   const persistedGlobalScore = useAtomValue(persistedGlobalScoreAtom);
   const [persistedPlayerState, setPersistedPlayerState] = useAtom(persistedPlayerStateAtom);
   const canGangIn = ready && user?.wallet?.address && authenticated && arReady;
+
+  useEffect(() => {
+    persistedPlayerState &&
+      // @ts-ignore
+      setCurrentGuildId(persistedPlayerState?.currentGuild);
+  }, [persistedPlayerState]);
 
   useEffect(() => {
     persistedGlobalScore &&
@@ -49,7 +67,7 @@ export default function Page() {
             id: token.id,
           })),
           "score"
-        )
+        ).reverse()
       );
   }, [persistedGlobalScore]);
 
@@ -123,40 +141,67 @@ export default function Page() {
                   exit={{ opacity: 0 }}
                   transition={{ delay: gangIndex / 10 }}
                 >
-                  <Container
-                    variant={"accent"}
-                    display={"flex"}
-                    justifyContent={"space-between"}
-                    alignItems={"center"}
-                  >
-                    <Flex alignItems={"center"} gap={".5rem"}>
-                      <Text color={"black"} fontWeight={"bold"} fontSize={"1.25rem"}>
-                        #{gangIndex + 1}
-                      </Text>
-                      <Image
-                        src={gang.image}
-                        fallback={
-                          <svg width="3rem" height="3rem" viewBox="0 0 309 309" fill="none">
-                            <circle cx="154.5" cy="154.5" r="154.5" fill="black" />
-                          </svg>
-                        }
-                        w={"3rem"}
-                        height={"3rem"}
-                      ></Image>
-                      <Text color={"black"} fontWeight={"bold"}>
-                        {gang.name}
-                      </Text>
-                    </Flex>
-                    <Button
-                      variant={"secondary"}
-                      onClick={() => onJoinGangButtonClick(gang)}
-                      isLoading={
-                        process.includes(EProcess.settingCurrentGang) || !ready || isLoading
-                      }
-                    >
-                      {!arReady ? "CONNECT" : "GANG IN"}
-                    </Button>
-                  </Container>
+                  <Accordion variant={"unstyled"} allowMultiple>
+                    <AccordionItem>
+                      <AccordionButton>
+                        <Container
+                          variant={"accent"}
+                          display={"flex"}
+                          justifyContent={"space-between"}
+                          alignItems={"center"}
+                        >
+                          <Flex alignItems={"center"} gap={".5rem"}>
+                            <Text color={"black"} fontWeight={"bold"} fontSize={"1.25rem"}>
+                              #{gangIndex + 1}
+                            </Text>
+                            <Image
+                              src={gang.image}
+                              fallback={
+                                <svg width="3rem" height="3rem" viewBox="0 0 309 309" fill="none">
+                                  <circle cx="154.5" cy="154.5" r="154.5" fill="black" />
+                                </svg>
+                              }
+                              w={"3rem"}
+                              height={"3rem"}
+                            ></Image>
+                            <Text color={"black"} fontWeight={"bold"}>
+                              {gang.name}
+                            </Text>
+                          </Flex>
+                          {process.includes(EProcess.settingCurrentGang) || !ready || isLoading ? (
+                            <Spinner></Spinner>
+                          ) : currentGuildId ? (
+                            <Text fontWeight={"bold"} fontSize={"1.25rem"} color={"black"}>
+                              {gang.score}
+                            </Text>
+                          ) : (
+                            <Button
+                              variant={"secondary"}
+                              onClick={() => onJoinGangButtonClick(gang)}
+                              isLoading={
+                                process.includes(EProcess.settingCurrentGang) || !ready || isLoading
+                              }
+                            >
+                              {!arReady ? "CONNECT" : "GANG IN"}
+                            </Button>
+                          )}
+                        </Container>
+                      </AccordionButton>
+                      <AccordionPanel display={"flex"} justifyContent={"center"}>
+                        <Button
+                          variant={"secondary"}
+                          bg={"white"}
+                          color={"black"}
+                          onClick={() => onJoinGangButtonClick(gang)}
+                          isLoading={
+                            process.includes(EProcess.settingCurrentGang) || !ready || isLoading
+                          }
+                        >
+                          {!arReady ? "CONNECT" : "GANG IN"}
+                        </Button>
+                      </AccordionPanel>
+                    </AccordionItem>
+                  </Accordion>
                 </motion.div>
               ))}
           </AnimatePresence>
