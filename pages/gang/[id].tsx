@@ -275,7 +275,9 @@ export default function Page() {
       >
         <ScaleFade in>
           <Button
-            onClick={() => router.push("/gangs")}
+            isDisabled={currentGangId == router.query.id}
+            isLoading={!currentGangId}
+            onClick={() => router.push(`/gang/${currentGangId}`)}
             variant={"unstyled"}
             // p={".5rem"}
             w={"3rem"}
@@ -294,7 +296,7 @@ export default function Page() {
           </Button>
         </ScaleFade>
         <CircularProgress
-          value={40}
+          value={currentGangId ? 40 : 0}
           bg={"#ffffff0f"}
           backdropFilter={"blur(20px)"}
           borderRadius={"full"}
