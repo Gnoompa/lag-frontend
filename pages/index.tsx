@@ -7,8 +7,8 @@ import useBubbleMap from "@/features/useBubbleMap";
 import { useRouter } from "next/router";
 import useArweave from "@/features/useArweave";
 import { useLogin, usePrivy } from "@privy-io/react-auth";
-import { useAtom } from "jotai";
-import { persistedPlayerStateAtom } from "@/state";
+import { useAtom, useAtomValue } from "jotai";
+import { persistedGlobalStateAtom, persistedPlayerStateAtom, persistedStateAtom } from "@/state";
 
 export enum EStage {
   initial,
@@ -20,7 +20,7 @@ export enum EStage {
 export default function Page() {
   const router = useRouter();
 
-  const { ready, user, authenticated, isModalOpen } = usePrivy();
+  const { ready: privyReady, user, authenticated, isModalOpen } = usePrivy();
   const { login } = useLogin({
     onComplete(user, isNewUser: boolean, wasAlreadyAuthenticated: boolean) {
       !wasAlreadyAuthenticated && setStage(EStage.confirmed);
@@ -28,9 +28,12 @@ export default function Page() {
   });
   const { ready: arReady, getArWallet } = useArweave(user?.wallet?.address);
 
-  const [persistedPlayerState, setPersistedPlayerState] = useAtom(persistedPlayerStateAtom);
+  const persistedState = useAtomValue(persistedStateAtom);
+  const persistedPlayerState = useAtomValue(persistedPlayerStateAtom);
 
   const [stage, setStage] = useState<EStage>();
+
+  const isReady = !!persistedState;
 
   const bubbleMapItems = useMemo(
     () => [
@@ -79,20 +82,35 @@ export default function Page() {
     return removeBubblemap;
   }, []);
 
-  // useEffect(() => {return () => console.log("exit") || removeBubblemap}, [removeBubblemap]);
-
   useEffect(() => {
     stage === EStage.gangSelection && setTimeout(() => router.push("gangs"), 500);
-    stage === EStage.game && setTimeout(() => router.push("g"), 500);
-  }, [stage]);
+    stage === EStage.game &&
+      setTimeout(
+        () =>
+          router.push(
+            `/gang/${
+              // @ts-ignore
+              persistedState.users[getArWallet(user.wallet?.address!)?.address].currentGuild
+            }`
+          ),
+        500
+      );
+  }, [stage, persistedState]);
 
   useEffect(() => {
-    ready &&
+    privyReady &&
+      isReady &&
       user &&
       authenticated &&
+      persistedState &&
       stage === EStage.confirmed &&
-      setStage(getArWallet(user.wallet?.address!) ? EStage.game : EStage.gangSelection);
-  }, [ready, user, arReady, stage]);
+      setStage(
+        // @ts-ignore
+        persistedState.users[getArWallet(user.wallet?.address!)?.address].currentGuild
+          ? EStage.game
+          : EStage.gangSelection
+      );
+  }, [privyReady, user, arReady, stage, isReady, persistedState]);
 
   return (
     <Flex
@@ -103,8 +121,8 @@ export default function Page() {
       height={"100vh"}
     >
       <Button
-        onClick={ready && authenticated ? () => setStage(EStage.confirmed) : login}
-        isLoading={!ready || isModalOpen}
+        onClick={privyReady && authenticated ? () => setStage(EStage.confirmed) : login}
+        isLoading={!privyReady || !isReady || isModalOpen}
         variant={"accent"}
         transition={".2s"}
         size={"lg"}

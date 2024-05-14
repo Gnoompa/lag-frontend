@@ -14,6 +14,7 @@ import {
   persistedGlobalStateAtom,
   persistedPlayerScoreAtom,
   persistedPlayerStateAtom,
+  persistedStateAtom,
   store,
 } from "./state";
 import {
@@ -42,6 +43,7 @@ export function State() {
 
   const [arContractState, setArContractState] = useAtom(arContractStateAtom);
 
+  const [persistedState, setPersistedState] = useAtom(persistedStateAtom);
   const [persistedPlayerState, setPersistedPlayerState] = useAtom(persistedPlayerStateAtom);
   const [persistedPlayerScore, setPersistedPlayerScore] = useAtom(persistedPlayerScoreAtom);
   const setClientPlayerScore = useSetAtom(clientPlayerScoreAtom);
@@ -70,18 +72,14 @@ export function State() {
   //     setClientPlayerScore(persistedPlayerState.score || 0));
   // }, [persistedPlayerState]);
 
-  // useEffect(() => {
-  //   persistedGlobalState &&
-  //     // @ts-ignore
-  //     (setPersistedGlobaScore(persistedGlobalState.score || 0),
-  //     // @ts-ignore
-  //     setClientGlobalScore(persistedGlobalState.score || 0));
-  // }, [persistedGlobalState]);
-
   useEffect(() => {
     arContractState &&
       // @ts-ignore
-      (setPersistedGlobaScore(arContractState.global.score || 0),
+      (setPersistedState(arContractState),
+      // @ts-ignore
+      setPersistedGlobaScore(arContractState.global.score || 0),
+      // @ts-ignore
+      setPersistedGlobalState(arContractState.global),
       // @ts-ignore
       setClientGlobalScore(arContractState.global.score || 0));
   }, [arContractState]);
@@ -91,7 +89,7 @@ export function State() {
       arWallet &&
       arContractState &&
       // @ts-ignore
-      setPersistedPlayerState(arContractState.users[arWallet.address]);
+      setPersistedPlayerState(arContractState.users[arWallet.address] || {});
   }, [authenticated, ready, user, arContractState, arWallet]);
 
   useEffect(() => {

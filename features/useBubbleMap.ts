@@ -30,7 +30,6 @@ export default function useBubbleMap(nodes: TNode[] | undefined, settings: ISett
   const nodeSelectionRef = useRef<d3.Selection<SVGGElement, unknown, HTMLElement, any>>();
 
   useEffect(() => {
-    console.log("enter bubblemap", nodes, simRef.current);
     nodesRef.current = nodes?.map(
       (node, index) =>
         nodesRef.current?.filter((nodeRef: TNode) => nodeRef.id === node.id)[0] || {
@@ -62,12 +61,16 @@ export default function useBubbleMap(nodes: TNode[] | undefined, settings: ISett
 
   const render = () => {
     if (!nodesRef.current) {
-      return
+      return;
     }
 
     const svg = getSvg();
     const nodeSelection = svg && getNodeSelection(svg);
     const sim = nodeSelection && nodesRef.current && getSimulation(nodesRef.current, nodeSelection);
+
+    if (!svg || !sim || !nodeSelection) {
+      return;
+    }
 
     renderNodes();
 
@@ -123,9 +126,9 @@ export default function useBubbleMap(nodes: TNode[] | undefined, settings: ISett
       .force("x", d3.forceX())
       .force("y", d3.forceY())
       .on("tick", () =>
-        nodeSelectionRef
-          .current! // @ts-ignore
-          .attr("x", (d) => (d.x || 0) - d.radius)
+        nodeSelectionRef.current
+          // @ts-ignore
+          ?.attr("x", (d) => (d.x || 0) - d.radius)
           // @ts-ignore
           .attr("y", (d) => (d.y || 0) - d.radius)
       );
