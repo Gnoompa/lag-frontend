@@ -7,8 +7,9 @@ import useBubbleMap from "@/features/useBubbleMap";
 import { useRouter } from "next/router";
 import useArweave from "@/features/useArweave";
 import { useLogin, usePrivy } from "@privy-io/react-auth";
-import { useAtom, useAtomValue } from "jotai";
-import { persistedGlobalStateAtom, persistedPlayerStateAtom, persistedStateAtom } from "@/state";
+import { useAtomValue } from "jotai";
+import { persistedPlayerStateAtom, persistedStateAtom } from "@/state";
+import useWallet from "@/features/useWallet";
 
 export enum EStage {
   initial,
@@ -26,7 +27,8 @@ export default function Page() {
       !wasAlreadyAuthenticated && setStage(EStage.confirmed);
     },
   });
-  const { ready: arReady, getArWallet } = useArweave(user?.wallet?.address);
+  const { signFn } = useWallet();
+  const { ready: arReady, getArWallet, auth } = useArweave(user?.wallet?.address);
 
   const persistedState = useAtomValue(persistedStateAtom);
   const persistedPlayerState = useAtomValue(persistedPlayerStateAtom);
@@ -76,15 +78,14 @@ export default function Page() {
     // @ts-ignore
     global?.Telegram?.WebApp?.ready();
 
-    console.log("enter");
-    // renderBubblemap();
-
     return removeBubblemap;
   }, []);
 
   useEffect(() => {
     stage === EStage.gangSelection && setTimeout(() => router.push("gangs"), 500);
-    stage === EStage.game &&
+
+    persistedState &&
+      stage === EStage.game &&
       setTimeout(
         () =>
           router.push(
@@ -95,11 +96,22 @@ export default function Page() {
           ),
         500
       );
-  }, [stage, persistedState]);
+  }, [user, stage, persistedState]);
+
+  useEffect(() => {
+    privyReady &&
+      authenticated &&
+      user &&
+      !getArWallet(user.wallet?.address!) &&
+      signFn &&
+      stage === EStage.confirmed &&
+      auth(user.wallet?.address!, signFn);
+  }, [stage, arReady, privyReady, authenticated, user, signFn]);
 
   useEffect(() => {
     privyReady &&
       isReady &&
+      arReady &&
       user &&
       authenticated &&
       persistedState &&
@@ -110,7 +122,7 @@ export default function Page() {
           ? EStage.game
           : EStage.gangSelection
       );
-  }, [privyReady, user, arReady, stage, isReady, persistedState]);
+  }, [privyReady, user, arReady, stage, isReady, persistedState, arReady]);
 
   return (
     <Flex
@@ -122,13 +134,15 @@ export default function Page() {
     >
       <Button
         onClick={privyReady && authenticated ? () => setStage(EStage.confirmed) : login}
-        isLoading={!privyReady || !isReady || isModalOpen}
+        isLoading={
+          !privyReady || !isReady || isModalOpen || (stage === EStage.confirmed && !arReady)
+        }
         variant={"accent"}
         transition={".2s"}
         size={"lg"}
         px={"5rem"}
         position={"fixed"}
-        bottom={stage !== EStage.initial ? "-5rem" : "20vh"}
+        bottom={stage !== EStage.initial && arReady ? "-5rem" : "20vh"}
         zIndex={"99999"}
       >
         GANG IN
