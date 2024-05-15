@@ -101,14 +101,21 @@ export default function Page() {
   useEffect(() => {
     privyReady &&
       authenticated &&
-      user &&
-      !getArWallet(user.wallet?.address!) &&
+      user &&      
       signFn &&
       stage === EStage.confirmed &&
       auth(user.wallet?.address!, signFn);
   }, [stage, arReady, privyReady, authenticated, user, signFn]);
 
   useEffect(() => {
+    console.log(privyReady ,
+      isReady ,
+      arReady ,
+      user ,
+      authenticated ,
+      persistedState ,
+      stage === EStage.confirmed)
+
     privyReady &&
       isReady &&
       arReady &&
