@@ -52,7 +52,7 @@ export default function Page() {
   useEffect(() => {
     persistedPlayerState &&
       // @ts-ignore
-      setCurrentGuildId(persistedPlayerState?.currentGuild);
+      setCurrentGuildId(persistedPlayerState?.currentGang);
   }, [persistedPlayerState]);
 
   useEffect(() => {
@@ -80,8 +80,12 @@ export default function Page() {
   }, [ready, user, authenticated, signFn]);
 
   useEffect(() => {
-    stage === EStage.game && setTimeout(() => router.push("g"));
-  }, [stage]);
+    stage === EStage.game &&
+      // @ts-ignore
+      persistedPlayerState?.currentGang &&
+      // @ts-ignore
+      setTimeout(() => router.push(`/gang/${persistedPlayerState?.currentGang}`));
+  }, [stage, persistedPlayerState]);
 
   const onJoinGangButtonClick = (gang: IGang) => {
     if (!user?.wallet?.address || !authenticated) {
@@ -101,7 +105,7 @@ export default function Page() {
     write({ function: "selectGuild", guild: gang.id })
       .then(
         () => (
-          setPersistedPlayerState({ ...persistedPlayerState, currentGuild: gang.id }),
+          setPersistedPlayerState({ ...persistedPlayerState, currentGang: gang.id }),
           setStage(EStage.game)
         )
       )

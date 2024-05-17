@@ -78,7 +78,7 @@ export default function Page() {
       return;
     }
 
-    router.push(`/gbeef?id=${gang.id}`);
+    router.push(`/raid?id=${gang.id}`);
   };
 
   return (
@@ -91,7 +91,7 @@ export default function Page() {
             exit={{ y: -300, opacity: 0 }}
           >
             <Text variant={"accent"} fontSize={"3rem"}>
-              BEEFIN
+              RAID
             </Text>
           </motion.div>
         )}

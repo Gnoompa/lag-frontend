@@ -32,6 +32,7 @@ import WideArrow from "@/components/icons/WideArrow";
 import { without } from "lodash";
 import TargetIcon from "@/components/icons/Target";
 import FarmIcon from "@/components/icons/Farm";
+import InviteIcon from "@/components/icons/Invite";
 
 export enum EStage {
   initial,
@@ -53,7 +54,7 @@ export default function Page() {
   const [gang, setGang] = useState<IGang>();
   const [persistedPlayerState, setPersistedPlayerState] = useAtom(persistedPlayerStateAtom);
   // @ts-ignore
-  const currentGangId = persistedPlayerState?.currentGuild;
+  const currentGangId = persistedPlayerState?.currentGang;
   const canGangIn = ready && user?.wallet?.address && authenticated && arReady;
 
   useEffect(() => {
@@ -164,10 +165,10 @@ export default function Page() {
       >
         <Flex
           bg={"whiteAlpha.200"}
-          borderRadius={"lg"}
           p=".5rem 1.5rem"
           gap={"1rem"}
           alignItems={"center"}
+          borderRadius={"xl"}
         >
           <Flex flexDir={"column"}>
             <Text color={"white"} fontWeight={"bold"}>
@@ -201,14 +202,15 @@ export default function Page() {
         <Flex flexDir={"column"} gap={"1rem"}>
           <Flex gap={"1rem"}>
             <ScaleFade delay={0.1} in style={{ display: "flex", flex: 0.33 }}>
-              <Button py={"3rem"} flex={1}>
+              <Button py={"3rem"} flex={1} borderRadius={"xl"}>
                 CHECK IN
               </Button>
             </ScaleFade>
             <ScaleFade delay={0.2} in style={{ display: "flex", flex: 0.67 }}>
               <Button
-                onClick={() => router.push(`/gbeef?id=${router.query.id}`)}
+                onClick={() => router.push(`/raids`)}
                 py={"3rem"}
+                borderRadius={"xl"}
                 flex={1}
                 overflow={"hidden"}
               >
@@ -227,8 +229,12 @@ export default function Page() {
           </Flex>
           <Flex gap={"1rem"}>
             <ScaleFade delay={0.3} in style={{ display: "flex", flex: 0.67 }}>
-              <Button py={"3rem"} flex={1} isDisabled overflow={"hidden"}>
-                FARM (soon)
+              <Button py={"3rem"} flex={1} isDisabled overflow={"hidden"} borderRadius={"xl"}>
+                <Flex flexDir={"column"} align={"flex-start"}>
+                  <Text fontSize={"1rem"}>FEELIN'</Text>
+                  <Text fontSize={"1.5rem"}>LUCKY</Text>
+                </Flex>
+
                 <Box
                   opacity={0.5}
                   pos={"absolute"}
@@ -236,13 +242,17 @@ export default function Page() {
                   bottom={"-1rem"}
                   transform={"rotateZ(20deg)"}
                 >
-                  <FarmIcon />
+                  {/* <FarmIcon /> */}
                 </Box>
               </Button>
             </ScaleFade>
             <ScaleFade delay={0.4} in style={{ display: "flex", flex: 0.33 }}>
-              <Button onClick={invite} py={"3rem"} flex={1}>
+              <Button onClick={invite} py={"3rem"} flex={1} borderRadius={"xl"} overflow={"hidden"}>
+                <Box pos={"absolute"}>
+                  <InviteIcon />
+                </Box>
                 <Text
+                  zIndex={1}
                   lineHeight={"1rem"}
                   fontWeight={"bold"}
                   fontSize={process.includes(EProcess.inviting) ? ".75rem" : "1rem"}

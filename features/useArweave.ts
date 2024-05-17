@@ -7,7 +7,7 @@ import { Address, PrivateKeyAccount, privateKeyToAccount } from "viem/accounts";
 import { useAtom } from "jotai";
 import { arWalletIsReadyAtom } from "@/state";
 
-export const ARWEAVE_CONTRACT = "QdyhVBxCS394xpY5JjcrZbR9Ne77XdY5waWipY39V9k";
+export const ARWEAVE_CONTRACT = "mGPmI5uFOYzs8Wx8P3q66GZvIfhAV5nitXzYKBqhZxY";
 const SIGN_MSG = "Login into DoubleTap";
 
 // const getContract = () => WarpFactory.forMainnet().contract(ARWEAVE_CONTRACT).setEvaluationOptions({

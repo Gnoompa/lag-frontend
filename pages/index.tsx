@@ -91,7 +91,7 @@ export default function Page() {
           router.push(
             `/gang/${
               // @ts-ignore
-              persistedState.users[getArWallet(user.wallet?.address!)?.address].currentGuild
+              persistedState.users[getArWallet(user.wallet?.address!)?.address].currentGang
             }`
           ),
         500
@@ -125,7 +125,7 @@ export default function Page() {
       stage === EStage.confirmed &&
       setStage(
         // @ts-ignore
-        persistedState.users[getArWallet(user.wallet?.address!)?.address].currentGuild
+        persistedState.users[getArWallet(user.wallet?.address!)?.address].currentGang
           ? EStage.game
           : EStage.gangSelection
       );

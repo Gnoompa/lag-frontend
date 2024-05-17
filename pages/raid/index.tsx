@@ -71,7 +71,7 @@ export default function Page() {
   const [arContractState, setArContractState] = useAtom(arContractStateAtom);
 
   // @ts-ignore
-  const currentGangId = persistedPlayerState?.currentGuild;
+  const currentGangId = persistedPlayerState?.currentGang;
   const oppositeGangId = router.query.id;
 
   const [currentGang, setCurrentGang] = useState<{ image: string }>();
@@ -139,7 +139,7 @@ export default function Page() {
     // @ts-ignore
     setCheckinAmount(persistedPlayerState?.checkins?.[currentGangId]?.amount || 0);
     // @ts-ignore
-    persistedPlayerState?.currentGuild &&
+    persistedPlayerState?.currentGang &&
       // @ts-ignore
       persistedPlayerState?.score?.[currentGangId]?.score &&
       setTimeout(
@@ -154,7 +154,7 @@ export default function Page() {
       persistedPlayerState &&
       setCurrentGang(
         // @ts-ignore
-        gangsMapRef.current.filter(({ id }) => id == persistedPlayerState?.currentGuild)[0]
+        gangsMapRef.current.filter(({ id }) => id == persistedPlayerState?.currentGang)[0]
       );
   }, [persistedPlayerState, gangsMap]);
 

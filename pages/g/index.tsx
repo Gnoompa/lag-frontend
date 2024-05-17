@@ -70,7 +70,7 @@ export default function Page() {
   const [arContractState, setArContractState] = useAtom(arContractStateAtom);
 
   // @ts-ignore
-  const currentGangId = persistedPlayerState?.currentGuild;
+  const currentGangId = persistedPlayerState?.currentGang;
 
   const [lastCheckin, setLastCheckin] = useState<number>();
 
