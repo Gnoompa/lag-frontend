@@ -81,7 +81,7 @@ const NumberColumn = ({ digit, delta, fontSize, color, incrementColor, decrement
                 fontWeight: "bold",
                 fontSize: fontSize,
                 lineHeight: fontSize,
-                color: "#34ff00",
+                color: "white",
               }}
             >
               {num}
@@ -99,7 +99,7 @@ const NumberColumn = ({ digit, delta, fontSize, color, incrementColor, decrement
 export const AnimatedCounter = ({
   value = 0,
   fontSize = "18px",
-  color = "#28c300",
+  color = "white",
   incrementColor = "#32cd32",
   decrementColor = "#fe6862",
   includeDecimals = false,

@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Button, Flex } from "@chakra-ui/react";
+import {
+  Button,
+  Flex,
+  PinInput,
+  PinInputField,
+  ScaleFade,
+  SlideFade,
+  Text,
+} from "@chakra-ui/react";
 import { ERC20_TOKENS } from "@/const";
 import useBubbleMap from "@/features/useBubbleMap";
 import { useRouter } from "next/router";
@@ -13,6 +21,7 @@ import useWallet from "@/features/useWallet";
 
 export enum EStage {
   initial,
+  login,
   gangSelection,
   game,
   confirmed,
@@ -34,6 +43,8 @@ export default function Page() {
   const persistedPlayerState = useAtomValue(persistedPlayerStateAtom);
 
   const [stage, setStage] = useState<EStage>();
+  const [loggedIn, setLoggedIn] = useState<boolean>();
+  const [passphase, setPassphase] = useState<string>();
 
   const isReady = !!persistedState;
 
@@ -72,17 +83,26 @@ export default function Page() {
     height: global.innerHeight * 0.7,
   });
 
+  const checkLogin = (value: string) => {
+    setPassphase(value?.toLocaleLowerCase());
+
+    value?.toLowerCase() === "lagin" &&
+      (localStorage.setItem("loginpasscode", "lagin"), setStage(EStage.initial), setLoggedIn(true));
+  };
+
   useEffect(() => {
     setTimeout(() => setStage(EStage.initial), 100);
 
     // @ts-ignore
     global?.Telegram?.WebApp?.ready();
 
+    setLoggedIn(localStorage.getItem("loginpasscode") === "lagin");
+
     return removeBubblemap;
   }, []);
 
   useEffect(() => {
-    stage === EStage.gangSelection && setTimeout(() => router.push("gangs"), 500);
+    stage === EStage.gangSelection && setTimeout(() => router.push("/gangs"), 500);
 
     persistedState &&
       stage === EStage.game &&
@@ -101,21 +121,13 @@ export default function Page() {
   useEffect(() => {
     privyReady &&
       authenticated &&
-      user &&      
+      user &&
       signFn &&
       stage === EStage.confirmed &&
       auth(user.wallet?.address!, signFn);
   }, [stage, arReady, privyReady, authenticated, user, signFn]);
 
   useEffect(() => {
-    console.log(privyReady ,
-      isReady ,
-      arReady ,
-      user ,
-      authenticated ,
-      persistedState ,
-      stage === EStage.confirmed)
-
     privyReady &&
       isReady &&
       arReady &&
@@ -125,7 +137,7 @@ export default function Page() {
       stage === EStage.confirmed &&
       setStage(
         // @ts-ignore
-        persistedState.users[getArWallet(user.wallet?.address!)?.address].currentGang
+        persistedState.users[getArWallet(user.wallet?.address!)?.address]?.currentGang
           ? EStage.game
           : EStage.gangSelection
       );
@@ -139,21 +151,60 @@ export default function Page() {
       padding={"1rem"}
       height={"100vh"}
     >
-      <Button
-        onClick={privyReady && authenticated ? () => setStage(EStage.confirmed) : login}
-        isLoading={
-          !privyReady || !isReady || isModalOpen || (stage === EStage.confirmed && !arReady)
-        }
-        variant={"accent"}
-        transition={".2s"}
-        size={"lg"}
-        px={"5rem"}
-        position={"fixed"}
-        bottom={stage !== EStage.initial && arReady ? "-5rem" : "20vh"}
-        zIndex={"99999"}
+      <SlideFade
+        in={loggedIn === false}
+        style={{
+          position: "fixed",
+          display: "flex",
+          alignItems: "center",
+          bottom: "20vh",
+        }}
       >
-        GANG IN
-      </Button>
+        <Flex gap={".5rem"} flexDir={"column"} align={"center"}>
+          <Flex gap={"1rem"}>
+            <PinInput
+              type="alphanumeric"
+              size={"lg"}
+              autoFocus
+              colorScheme="whiteAlpha"
+              isInvalid={passphase ? passphase !== "lagin" : false}
+              onComplete={checkLogin}
+            >
+              <PinInputField />
+              <PinInputField />
+              <PinInputField />
+              <PinInputField />
+              <PinInputField />
+            </PinInput>
+          </Flex>
+          <Text opacity={0.3} fontWeight={"100"}>
+            code phrase
+          </Text>
+        </Flex>
+      </SlideFade>
+      <ScaleFade
+        delay={0.3}
+        in={stage !== EStage.login && loggedIn}
+        style={{
+          position: "fixed",
+          display: "flex",
+          alignItems: "center",
+          bottom: "20vh",
+        }}
+      >
+        <Button
+          onClick={privyReady && authenticated ? () => setStage(EStage.confirmed) : login}
+          isLoading={
+            !privyReady || !isReady || isModalOpen || (stage === EStage.confirmed && !arReady)
+          }
+          variant={"accent"}
+          size={"lg"}
+          px={"5rem"}
+          zIndex={"99999"}
+        >
+          GANG IN
+        </Button>
+      </ScaleFade>
     </Flex>
   );
 }

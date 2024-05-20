@@ -1,8 +1,11 @@
 export const GENESIS_EPOCH_TIMESTAMP = 1711384626;
 export const GAME_STAGES_DURATION = [60, 30, 30];
 
-export const MAX_SCORE_PER_MIN = 1_000;
-export const ENERGY_RESTORE_PER_SECOND = 10;
+export const MAX_SCORE = 10_000;
+export const MAX_ENERGY = 10_000;
+export const SCORE_ENERGY_RECHARGE_INTERVAL = 86_400; // p/s
+export const ENERGY_RESTORE_PER_SECOND = MAX_ENERGY / SCORE_ENERGY_RECHARGE_INTERVAL;
+export const GANG_LEVEL_STEP = 10_000
 
 export enum EGameStage {
   Active,

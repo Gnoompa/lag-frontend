@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import {
   arContractStateAtom,
@@ -21,7 +21,7 @@ import {
   ENERGY_RESTORE_PER_SECOND,
   GAME_STAGES_DURATION,
   GENESIS_EPOCH_TIMESTAMP,
-  MAX_SCORE_PER_MIN,
+  MAX_ENERGY,
 } from "./const";
 import useArweave from "@/features/useArweave";
 import { min } from "lodash";
@@ -53,10 +53,12 @@ export function State() {
   const setClientGlobalScore = useSetAtom(clientGlobalScoreAtom);
 
   const [debouncedEnergy, setDebouncedEnergy] = useAtom(debouncedEnergyAtom);
+  const energyIntervalRef = useRef<any>();
+
+  console.log(arContractState);
 
   useEffect(() => {
     initEpochs();
-    initEnergy();
     syncArContractState();
   }, [arWallet]);
 
@@ -97,7 +99,8 @@ export function State() {
       // @ts-ignore
       (setPersistedPlayerScore(persistedPlayerState.score),
       // @ts-ignore
-      setClientPlayerScore(persistedPlayerState.score));
+      setClientPlayerScore(persistedPlayerState.score),
+      initEnergy());
   }, [persistedPlayerState]);
 
   useEffect(() => {
@@ -105,18 +108,28 @@ export function State() {
   }, [energy]);
 
   const initEnergy = () => {
-    setInterval(
-      () =>
-        setEnergy(
-          (oldEnergy: number) =>
-            min([
-              oldEnergy + ENERGY_RESTORE_PER_SECOND > MAX_SCORE_PER_MIN
-                ? MAX_SCORE_PER_MIN
-                : oldEnergy + ENERGY_RESTORE_PER_SECOND,
-            ]) || MAX_SCORE_PER_MIN
-        ),
-      1000
-    );
+    energyIntervalRef.current === undefined &&
+      persistedPlayerState &&
+      (setEnergy(
+        min([
+          // @ts-ignore
+          persistedPlayerState?.energy[persistedPlayerState.currentGang] !== undefined
+            ? // @ts-ignore
+              persistedPlayerState?.energy[persistedPlayerState.currentGang] +
+              ((Date.now() -
+                // @ts-ignore
+                (persistedPlayerState?.score[persistedPlayerState.currentGang]?.lastTimestamp ||
+                  0)) /
+                1000) *
+                ENERGY_RESTORE_PER_SECOND
+            : MAX_ENERGY,
+          MAX_ENERGY,
+        ])
+      ),
+      (energyIntervalRef.current = setInterval(
+        () => setEnergy((oldValue) => min([oldValue! + ENERGY_RESTORE_PER_SECOND, MAX_ENERGY])),
+        1000
+      )));
   };
 
   const initEpochs = () => {

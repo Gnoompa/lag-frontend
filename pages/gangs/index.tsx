@@ -102,7 +102,7 @@ export default function Page() {
 
     setProcess([...process, EProcess.settingCurrentGang]);
 
-    write({ function: "selectGuild", guild: gang.id })
+    write({ function: "gang", gang: gang.id })
       .then(
         () => (
           setPersistedPlayerState({ ...persistedPlayerState, currentGang: gang.id }),

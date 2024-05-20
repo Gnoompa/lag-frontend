@@ -38,7 +38,9 @@ export default function Page() {
   const canGangIn = ready && user?.wallet?.address && authenticated && arReady;
 
   useEffect(() => {
-    persistedGlobalScore &&
+    // @ts-ignore
+    persistedPlayerState?.currentGang &&
+      persistedGlobalScore &&
       setAllGangs(
         sortBy(
           ERC20_TOKENS.map((token) => ({
@@ -47,11 +49,12 @@ export default function Page() {
             // @ts-ignore
             score: persistedGlobalScore[token.id] || 0,
             id: token.id,
-          })),
+            // @ts-ignore
+          })).filter(({ id }) => id !== persistedPlayerState?.currentGang),
           "score"
         )
       );
-  }, [persistedGlobalScore]);
+  }, [persistedPlayerState, persistedGlobalScore]);
 
   useEffect(() => {
     ready &&

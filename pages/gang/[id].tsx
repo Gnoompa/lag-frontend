@@ -9,30 +9,35 @@ import {
   Container,
   Divider,
   Flex,
-  IconButton,
   Image,
   Menu,
   MenuButton,
   MenuList,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalOverlay,
   ScaleFade,
   Text,
+  useDisclosure,
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import { IGang } from "@/typings";
 import useArweave from "@/features/useArweave";
 import { usePrivy } from "@privy-io/react-auth";
 import useWallet from "@/features/useWallet";
-import { useAtom } from "jotai";
-import { persistedPlayerStateAtom } from "@/state";
-import { ERC20_TOKENS, GANGS } from "@/const";
+import { useAtom, useAtomValue } from "jotai";
+import { persistedGlobalStateAtom, persistedPlayerStateAtom } from "@/state";
+import { ERC20_TOKENS, GANG_LEVEL_STEP, GANGS } from "@/const";
 import UserCount from "@/components/icons/UserCount";
-import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircleIcon, ChevronLeftIcon, HamburgerIcon } from "@chakra-ui/icons";
 import WideArrow from "@/components/icons/WideArrow";
 import { without } from "lodash";
 import TargetIcon from "@/components/icons/Target";
-import FarmIcon from "@/components/icons/Farm";
 import InviteIcon from "@/components/icons/Invite";
+import { useSpring } from "framer-motion";
 
 export enum EStage {
   initial,
@@ -41,6 +46,8 @@ export enum EStage {
 export default function Page() {
   enum EProcess {
     inviting,
+    settingCurrentGang,
+    hasSetCurrentGang,
   }
 
   const [process, setProcess] = useState<EProcess[]>([]);
@@ -53,9 +60,31 @@ export default function Page() {
 
   const [gang, setGang] = useState<IGang>();
   const [persistedPlayerState, setPersistedPlayerState] = useAtom(persistedPlayerStateAtom);
+  const persistedGlobalState = useAtomValue(persistedGlobalStateAtom);
   // @ts-ignore
   const currentGangId = persistedPlayerState?.currentGang;
   const canGangIn = ready && user?.wallet?.address && authenticated && arReady;
+
+  const gangId = router.query.id as string;
+  // @ts-ignore
+  const gangScore = persistedGlobalState?.score?.[gangId];
+
+  const gangMemberCount = persistedGlobalState
+    ? // @ts-ignore
+      persistedGlobalState?.gangMemberCount?.[gangId] || 0
+    : undefined;
+
+  const gangScoreProgress = useSpring(0);
+
+  const {
+    isOpen: isJoinGangModalOpen,
+    onOpen: onJoinGangModalOpen,
+    onClose: onJoinGangModalClose,
+  } = useDisclosure();
+
+  useEffect(() => {
+    gangScore && gangScoreProgress.set(((gangScore % GANG_LEVEL_STEP) / GANG_LEVEL_STEP) * 100);
+  }, [gangScore]);
 
   useEffect(() => {
     router.query.id &&
@@ -82,6 +111,33 @@ export default function Page() {
     navigator.clipboard.writeText(`${location.origin}/?i=${arWallet?.address}`);
   };
 
+  const onRaidButtonClick = () =>
+    currentGangId === gangId ? router.push(`/raids`) : onJoinGangModalOpen();
+
+  const joinGang = () => {
+    write({ function: "gang", gang: gangId })
+      .then(
+        () => (
+          setPersistedPlayerState({ ...persistedPlayerState, currentGang: gangId }),
+          setProcess([...process, EProcess.settingCurrentGang])
+        )
+      )
+      .catch(() => alert("Oops, smth went wrong..."))
+      .finally(
+        () => (
+          setProcess([...process, EProcess.hasSetCurrentGang]),
+          setTimeout(
+            () => (
+              setProcess(without(process, EProcess.settingCurrentGang)),
+              setProcess(without(process, EProcess.hasSetCurrentGang)),
+              onJoinGangModalClose()
+            ),
+            1000
+          )
+        )
+      );
+  };
+
   return (
     <Flex width={"100%"} flexDirection={"column"} alignItems={"center"} padding={"1rem"}>
       <Container
@@ -89,7 +145,7 @@ export default function Page() {
         w={"100vw"}
         top={0}
         left={0}
-        pos={"fixed"}
+        pos={"absolute"}
         overflow={"hidden"}
         overflowY={"hidden"}
         maxW={"none"}
@@ -109,15 +165,25 @@ export default function Page() {
           <ChevronLeftIcon color={"black"}></ChevronLeftIcon>
           <Text color={"black"}>All Gangs</Text>
         </Button>
-        <Image
-          src={gang?.image}
-          w={"150vw"}
-          pos={"absolute"}
+        <Flex
+          height={"20vh"}
+          overflow={"hidden"}
+          pos={"fixed"}
           top={0}
-          left={"50vw"}
-          maxW={"none"}
-          transform={"translate(-50%, -50%)"}
-        ></Image>
+          left={0}
+          width={"100vw"}
+          borderRadius={"0 0 30px 30px"}
+        >
+          <Image
+            src={gang?.image}
+            w={"150vw"}
+            pos={"absolute"}
+            top={0}
+            left={"50vw"}
+            maxW={"none"}
+            transform={"translate(-50%, -50%)"}
+          ></Image>
+        </Flex>
         <Container
           backdropFilter={"blur(50px)"}
           bg={"#ffffff52"}
@@ -146,9 +212,10 @@ export default function Page() {
             <Text color={"black"} fontWeight={"bold"} fontSize={"2rem"} mt={"-.25rem"}>
               {gang?.name}
             </Text>
+            <ScaleFade in={gangMemberCount !== undefined}></ScaleFade>
             <Flex gap={".25rem"} align={"center"}>
               <UserCount />
-              <Text fontWeight={"bold"}>0</Text>
+              <Text fontWeight={"bold"}>{gangMemberCount}</Text>
             </Flex>
             {/* <Text color={"white"} fontStyle={"italic"} opacity={0.8}>
               short desc
@@ -208,7 +275,8 @@ export default function Page() {
             </ScaleFade>
             <ScaleFade delay={0.2} in style={{ display: "flex", flex: 0.67 }}>
               <Button
-                onClick={() => router.push(`/raids`)}
+                // isDisabled={currentGangId !== gangId}
+                onClick={onRaidButtonClick}
                 py={"3rem"}
                 borderRadius={"xl"}
                 flex={1}
@@ -248,8 +316,8 @@ export default function Page() {
             </ScaleFade>
             <ScaleFade delay={0.4} in style={{ display: "flex", flex: 0.33 }}>
               <Button onClick={invite} py={"3rem"} flex={1} borderRadius={"xl"} overflow={"hidden"}>
-                <Box pos={"absolute"}>
-                  <InviteIcon />
+                <Box pos={"absolute"} w={"100%"}>
+                  <InviteIcon width="100%" />
                 </Box>
                 <Text
                   zIndex={1}
@@ -306,7 +374,7 @@ export default function Page() {
           </Button>
         </ScaleFade>
         <CircularProgress
-          value={currentGangId ? 40 : 0}
+          value={gangScoreProgress.get()}
           bg={"#ffffff0f"}
           backdropFilter={"blur(20px)"}
           borderRadius={"full"}
@@ -319,8 +387,8 @@ export default function Page() {
         >
           <CircularProgressLabel>
             <Flex flexDir={"column"}>
-              <Text fontWeight={"bold"}>1 000</Text>
-              <Text>LVL 3</Text>
+              <Text fontWeight={"bold"}>{gangScore}</Text>
+              <Text>LVL {~~(gangScore / GANG_LEVEL_STEP) + 1}</Text>
             </Flex>
           </CircularProgressLabel>
         </CircularProgress>
@@ -374,6 +442,42 @@ export default function Page() {
           </Menu>
         </ScaleFade>
       </Flex>
+      <Modal
+        onClose={onJoinGangModalClose}
+        isOpen={isJoinGangModalOpen}
+        isCentered
+        size={"sm"}
+        closeOnOverlayClick={!process.includes(EProcess.settingCurrentGang)}
+      >
+        <ModalOverlay bg="none" backdropFilter="auto" backdropBlur="2px" />
+        <ModalContent bg={"black"}>
+          <ModalCloseButton />
+          <ModalBody>
+            <Text>To raid you'll have to join this gang first.</Text>
+            <Text>Penalty for leaving your current gang is 15%</Text>
+          </ModalBody>
+          <ModalFooter justifyContent={"space-around"}>
+            <Button
+              bg={"white"}
+              color={"black"}
+              onClick={() => joinGang()}
+              isLoading={process.includes(EProcess.settingCurrentGang)}
+              isDisabled={process.includes(EProcess.hasSetCurrentGang)}
+            >
+              {process.includes(EProcess.hasSetCurrentGang) ? "Done!" : "Join"}
+            </Button>
+            <Button
+              onClick={onJoinGangModalClose}
+              // isLoading={process.includes(EProcess.settingCurrentGang)}
+              // isDisabled={process.includes(EProcess.hasSetCurrentGang)}
+              isLoading={false}
+              isDisabled={true}
+            >
+              Nah
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Flex>
   );
 }

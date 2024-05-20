@@ -1,15 +1,15 @@
 "use client"
 
 import { atom, createStore } from 'jotai';
-import { EGameStage, MAX_SCORE_PER_MIN } from "./const";
+import { EGameStage } from "./const";
 import atomWithDebounce from './atoms/debouncedAtom';
 
 export const currentEpochAtom = atom(0)
 export const activeEpochAtom = atom(0);
 
-export const energyAtom = atom(MAX_SCORE_PER_MIN);
+export const energyAtom = atom<number | undefined>(undefined);
 export const { debouncedValueAtom: debouncedEnergyAtom, currentValueAtom: debouncedEnergyAtomValue } =
-    atomWithDebounce(0);
+    atomWithDebounce<number | undefined>(undefined);
 
 export const arWalletIsReadyAtom = atom<boolean>(false)
 export const arContractStateAtom = atom<object | undefined>(undefined)
