@@ -299,7 +299,7 @@ export default function Page() {
             <ScaleFade delay={0.3} in style={{ display: "flex", flex: 0.67 }}>
               <Button py={"3rem"} flex={1} isDisabled overflow={"hidden"} borderRadius={"xl"}>
                 <Flex flexDir={"column"} align={"flex-start"}>
-                  <Text fontSize={"1rem"}>FEELIN'</Text>
+                  <Text fontSize={"1rem"}>FEELIN&apos;</Text>
                   <Text fontSize={"1.5rem"}>LUCKY</Text>
                 </Flex>
 
@@ -453,7 +453,7 @@ export default function Page() {
         <ModalContent bg={"black"}>
           <ModalCloseButton />
           <ModalBody>
-            <Text>To raid you'll have to join this gang first.</Text>
+            <Text>To raid you&apos;ll have to join this gang first.</Text>
             <Text>Penalty for leaving your current gang is 15%</Text>
           </ModalBody>
           <ModalFooter justifyContent={"space-around"}>

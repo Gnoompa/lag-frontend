@@ -30,7 +30,7 @@ import {
   persistedPlayerStateAtom,
 } from "@/state";
 import useBubbleMap, { TNode } from "@/features/useBubbleMap";
-import { ENERGY_RESTORE_PER_SECOND, ERC20_TOKENS, GANGS, MAX_SCORE_PER_MIN } from "@/const";
+import { ENERGY_RESTORE_PER_SECOND, ERC20_TOKENS, GANGS } from "@/const";
 import atomWithDebounce from "@/atoms/debouncedAtom";
 
 const { debouncedValueAtom: debouncedScoreAtom, currentValueAtom: debouncedScoreAtomValue } =
@@ -96,7 +96,7 @@ export default function Page() {
   const [localEnergy, setLocalEnergy] = useState<number>();
   const [restoredEnergy, setRestoredEnergy] = useState(0);
 
-  const energyRef = useRef<number>(energy);
+  // const energyRef = useRef<number>(energy);
   const checkinTimerInterval = useRef<any>();
   const gangsMapRef = useRef<any>();
   const lastBubblePopTimestampRef = useRef<number>();
@@ -117,9 +117,9 @@ export default function Page() {
     gangsMapRef.current = gangsMap;
   }, [gangsMap]);
 
-  useEffect(() => {
-    energyRef.current = energy;
-  }, [energy]);
+  // useEffect(() => {
+  //   energyRef.current = energy;
+  // }, [energy]);
 
   useEffect(() => {
     // @ts-ignore
@@ -155,11 +155,11 @@ export default function Page() {
     debouncedScore && commitScore(debouncedScore);
   }, [debouncedScore]);
 
-  useEffect(() => {
-    +localEnergy! < MAX_SCORE_PER_MIN / 100 &&
-      (setProcess([...process, EProcess.depleted]),
-      setTimeout(() => setProcess(without(process, EProcess.depleted)), 2000));
-  }, [localEnergy]);
+  // useEffect(() => {
+  //   +localEnergy! < MAX_SCORE_PER_MIN / 100 &&
+  //     (setProcess([...process, EProcess.depleted]),
+  //     setTimeout(() => setProcess(without(process, EProcess.depleted)), 2000));
+  // }, [localEnergy]);
 
   useEffect(() => {
     clearInterval(checkinTimerInterval.current);
@@ -226,9 +226,9 @@ export default function Page() {
               poppable: true,
               image: `/candle${rnd}.png`,
               onPop: function (node: TNode) {
-                if (energyRef.current < node.value) {
-                  return;
-                }
+                // if (energyRef.current < node.value) {
+                //   return;
+                // }
 
                 (lastBubblePopTimestampRef.current = +Date.now()),
                   // @ts-ignore
