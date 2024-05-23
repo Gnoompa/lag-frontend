@@ -14,13 +14,16 @@ export const theme = extendTheme({
             'html, body': {
                 background: "black",
                 minHeight: "100vh"
-            },           
+            },
         },
     },
     semanticTokens: {
         colors: {
             black: '#0E1111',
-            white: "#FAFAFA"
+            white: "#FAFAFA",
+            accent: "#6EFEC2",
+            bgAccent1: "#262626",
+            bgAccent2: "#171717"
         }
     },
     components: {
@@ -50,6 +53,19 @@ export const theme = extendTheme({
                         }
                     }
                 },
+                main: {
+                    bgGradient: "linear(bgAccent1, bgAccent2)",
+                    border: "1px solid",
+                    borderColor: "bgAccent1",
+                    borderRadius: "xl",
+                    height: "auto",
+                    paddingTop: "1rem",
+                    paddingBottom: "1rem",
+                    minHeight: "6rem",
+                    _hover: {
+                        borderColor: "whiteAlpha.300"
+                    }                    
+                }
             }
         },
         Container: {
@@ -102,6 +118,15 @@ export const theme = extendTheme({
                         bg: "linear-gradient(111.77deg, rgba(2, 177, 170, 0.3) -16.98%, rgba(0, 0, 0, 0.3) 111.71%)",
                     }
                 },
+            }
+        },
+        Switch: {
+            baseStyle: {
+                track: {
+                    p: ".5rem",                    
+                    bgGradient: "linear(black, bgAccent1)",
+                    boxShadow: "none !important",
+                }
             }
         }
     }

@@ -29,7 +29,7 @@ export default function useArweave(address: string | undefined) {
     ready && address && _getLinkedArWallet() && setArWallet(getArWallet())
   }, [ready, address])
 
-  const auth = async (address: string, sign: (msg: string) => Promise<string>, invitedBy: string = "") => {
+  const auth = async (address: string, sign: (msg: string) => Promise<string>, invitedBy: string | undefined = "") => {
     if (_getLinkedArWallet(address)) {
       setReady(true);
       setIsLoading(false)

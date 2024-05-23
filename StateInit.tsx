@@ -55,8 +55,6 @@ export function State() {
   const [debouncedEnergy, setDebouncedEnergy] = useAtom(debouncedEnergyAtom);
   const energyIntervalRef = useRef<any>();
 
-  console.log(arContractState);
-
   useEffect(() => {
     initEpochs();
     syncArContractState();
@@ -107,7 +105,21 @@ export function State() {
     setDebouncedEnergy(energy);
   }, [energy]);
 
+  console.log(persistedPlayerState)
+
   const initEnergy = () => {
+    persistedPlayerState &&
+      console.log(
+        // @ts-ignore
+
+        persistedPlayerState?.energy[persistedPlayerState.currentGang] +
+          ((Date.now() -
+            // @ts-ignore
+            (persistedPlayerState?.score[persistedPlayerState.currentGang]?.lastTimestamp || 0)) /
+            1000) *
+            ENERGY_RESTORE_PER_SECOND
+      );
+
     energyIntervalRef.current === undefined &&
       persistedPlayerState &&
       (setEnergy(

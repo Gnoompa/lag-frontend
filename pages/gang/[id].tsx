@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -20,6 +20,9 @@ import {
   ModalFooter,
   ModalOverlay,
   ScaleFade,
+  Show,
+  SlideFade,
+  Switch,
   Text,
   useDisclosure,
 } from "@chakra-ui/react";
@@ -38,6 +41,7 @@ import { without } from "lodash";
 import TargetIcon from "@/components/icons/Target";
 import InviteIcon from "@/components/icons/Invite";
 import { useSpring } from "framer-motion";
+import RewardIcon from "@/components/icons/Reward";
 
 export enum EStage {
   initial,
@@ -48,10 +52,17 @@ export default function Page() {
     inviting,
     settingCurrentGang,
     hasSetCurrentGang,
+    checkingIn,
   }
 
   const [process, setProcess] = useState<EProcess[]>([]);
   const [stage, setStage] = useState<EStage>(EStage.initial);
+
+  const [lastCheckin, setLastCheckin] = useState<number>();
+
+  const [checkinAmount, setCheckinAmount] = useState<number>();
+  const [hasCheckedIn, setHasCheckedIn] = useState<Boolean>();
+  const [nextCheckinTime, setNextCheckinTime] = useState<string>();
 
   const router = useRouter();
   const { ready, user, login, authenticated } = usePrivy();
@@ -63,11 +74,15 @@ export default function Page() {
   const persistedGlobalState = useAtomValue(persistedGlobalStateAtom);
   // @ts-ignore
   const currentGangId = persistedPlayerState?.currentGang;
+  // @ts-ignore
+  const checkins = persistedPlayerState?.checkin;
   const canGangIn = ready && user?.wallet?.address && authenticated && arReady;
 
   const gangId = router.query.id as string;
   // @ts-ignore
   const gangScore = persistedGlobalState?.score?.[gangId];
+
+  const checkinTimerInterval = useRef<any>();
 
   const gangMemberCount = persistedGlobalState
     ? // @ts-ignore
@@ -96,12 +111,27 @@ export default function Page() {
   }, [router]);
 
   useEffect(() => {
+    clearInterval(checkinTimerInterval.current);
+
+    lastCheckin ? initCheckin() : setHasCheckedIn(false);
+  }, [lastCheckin]);
+
+  useEffect(() => {
     ready &&
       user?.wallet?.address &&
       authenticated &&
       signFn &&
       auth(user?.wallet?.address!, signFn);
   }, [ready, user, authenticated, signFn]);
+
+  useEffect(() => {
+    persistedPlayerState &&
+      gangId &&
+      // @ts-ignore
+      (setCheckinAmount(persistedPlayerState.checkin[gangId]?.value || 0),
+      // @ts-ignore
+      setLastCheckin(persistedPlayerState.checkin[gangId]?.lastTimestamp));
+  }, [persistedPlayerState, gangId]);
 
   const invite = () => {
     setProcess([...process, EProcess.inviting]);
@@ -136,6 +166,40 @@ export default function Page() {
           )
         )
       );
+  };
+
+  const initCheckin = () => {
+    setHasCheckedIn(lastCheckin ? Date.now() - lastCheckin < 24 * 60 * 60 * 1000 - 1 : false);
+
+    checkinTimerInterval.current = setInterval(
+      () => (
+        setHasCheckedIn(lastCheckin ? Date.now() - lastCheckin < 24 * 60 * 60 * 1000 - 1 : false),
+        setNextCheckinTime(
+          lastCheckin
+            ? ((date): string =>
+                // @ts-ignore
+                [~~(date / 60), ~~date].reduce(
+                  (a, b, i) =>
+                    // @ts-ignore
+                    +a ? `${a}${["h", "m", "s"][i]}` : i == 1 && !a ? `${b}s` : i == 0 ? b : a,
+                  ~~(date / (60 * 60 * 1000))
+                ))(24 * 60 * 60 * 1000 - (+Date.now() - lastCheckin))
+            : undefined
+        )
+      ),
+      1000
+    );
+  };
+
+  console.log(nextCheckinTime, lastCheckin);
+
+  const checkin = () => {
+    setProcess([...process, EProcess.checkingIn]);
+
+    write({ function: "checkin", gangId: currentGangId })
+      .then(() => (setLastCheckin(+Date.now()), setCheckinAmount(checkinAmount! + 1)))
+      .catch(() => alert("Oops, smth went wrong..."))
+      .finally(() => setProcess(without(process, EProcess.checkingIn)));
   };
 
   return (
@@ -228,7 +292,7 @@ export default function Page() {
         flexDir={"column"}
         gap={"1rem"}
         px={"1rem"}
-        w={"min(100%, 35rem)"}
+        w={"min(100%, 30rem)"}
       >
         <Flex
           bg={"whiteAlpha.200"}
@@ -269,25 +333,73 @@ export default function Page() {
         <Flex flexDir={"column"} gap={"1rem"}>
           <Flex gap={"1rem"}>
             <ScaleFade delay={0.1} in style={{ display: "flex", flex: 0.33 }}>
-              <Button py={"3rem"} flex={1} borderRadius={"xl"}>
-                CHECK IN
+              <Button
+                onClick={checkin}
+                variant={"main"}
+                isDisabled={!!hasCheckedIn}
+                isLoading={checkinAmount === undefined || process.includes(EProcess.checkingIn)}
+                flex={1}
+                flexDir={"column"}
+                gap={"1rem"}
+              >
+                <ScaleFade
+                  in={!!checkinAmount}
+                  style={{ position: "absolute", top: "-.5rem", left: "-.5rem" }}
+                >
+                  <Flex
+                    borderRadius={"full"}
+                    bg={"white"}
+                    minW={"1.5rem"}
+                    h="1.5rem"
+                    p={".5rem"}
+                    align={"center"}
+                    justify={"center"}
+                  >
+                    <Text color={"black"} fontSize={".75rem"}>
+                      {checkinAmount}
+                    </Text>
+                  </Flex>
+                </ScaleFade>
+                <Flex flexDir={"column"} align={"center"} gap={".5rem"}>
+                  <Text>CHECK IN</Text>
+                  {checkinAmount !== undefined && checkinAmount == 0 && (
+                    <ScaleFade in>
+                      <Flex gap={".25rem"} align={"baseline"}>
+                        <Text color="accent">3X</Text>
+                        <Text color="accent" fontSize={".75rem"}>
+                          BOOST
+                        </Text>
+                      </Flex>
+                    </ScaleFade>
+                  )}
+                  <ScaleFade in={hasCheckedIn && !!nextCheckinTime}>
+                    <Text fontSize={".9rem"} color={"whiteAlpha.500"}>
+                      in {nextCheckinTime}
+                    </Text>
+                  </ScaleFade>
+                </Flex>
+
+                {/* <Switch size={"lg"}></Switch> */}
               </Button>
             </ScaleFade>
             <ScaleFade delay={0.2} in style={{ display: "flex", flex: 0.67 }}>
               <Button
+                variant={"main"}
                 // isDisabled={currentGangId !== gangId}
                 onClick={onRaidButtonClick}
-                py={"3rem"}
                 borderRadius={"xl"}
+                justifyContent={"flex-start"}
+                alignItems={"flex-start"}
                 flex={1}
                 overflow={"hidden"}
+                fontSize={"1.25rem"}
               >
                 RAID
                 <Box
                   opacity={0.2}
                   pos={"absolute"}
                   right={"-2.5rem"}
-                  bottom={"-2rem"}
+                  top={"20%"}
                   transform={"rotateZ(20deg)"}
                 >
                   <TargetIcon />
@@ -297,41 +409,63 @@ export default function Page() {
           </Flex>
           <Flex gap={"1rem"}>
             <ScaleFade delay={0.3} in style={{ display: "flex", flex: 0.67 }}>
-              <Button py={"3rem"} flex={1} isDisabled overflow={"hidden"} borderRadius={"xl"}>
+              <Button
+                flex={1}
+                isDisabled
+                overflow={"hidden"}
+                borderRadius={"xl"}
+                variant={"main"}
+                justifyContent={"flex-start"}
+                alignItems={"flex-start"}
+              >
                 <Flex flexDir={"column"} align={"flex-start"}>
                   <Text fontSize={"1rem"}>FEELIN&apos;</Text>
                   <Text fontSize={"1.5rem"}>LUCKY</Text>
                 </Flex>
 
-                <Box
-                  opacity={0.5}
-                  pos={"absolute"}
-                  left={"-2rem"}
-                  bottom={"-1rem"}
-                  transform={"rotateZ(20deg)"}
-                >
-                  {/* <FarmIcon /> */}
+                <Box opacity={0.2} pos={"absolute"} right={"-2.5rem"} bottom={"-20%"}>
+                  <RewardIcon />
                 </Box>
               </Button>
             </ScaleFade>
             <ScaleFade delay={0.4} in style={{ display: "flex", flex: 0.33 }}>
-              <Button onClick={invite} py={"3rem"} flex={1} borderRadius={"xl"} overflow={"hidden"}>
-                <Box pos={"absolute"} w={"100%"}>
-                  <InviteIcon width="100%" />
-                </Box>
+              <Button
+                onClick={invite}
+                flex={1}
+                borderRadius={"xl"}
+                overflow={"hidden"}
+                variant={"main"}
+                p={0}
+                flexDir={"column"}
+                alignContent={"center"}
+                justifyContent={"center"}
+                gap={".5rem"}
+              >
+                {!process.includes(EProcess.inviting) && (
+                  <ScaleFade in>
+                    <InviteIcon />
+                  </ScaleFade>
+                )}
                 <Text
                   zIndex={1}
                   lineHeight={"1rem"}
                   fontWeight={"bold"}
                   fontSize={process.includes(EProcess.inviting) ? ".75rem" : "1rem"}
                 >
-                  {process.includes(EProcess.inviting) ? (
-                    <Flex flexDir={"column"} gap={"1rem"} alignItems={"center"}>
-                      <CheckCircleIcon color={"#6EFEC2"} boxSize={7}></CheckCircleIcon>
-                      <Text>link copied</Text>
-                    </Flex>
-                  ) : (
-                    "INVITE"
+                  {process.includes(EProcess.inviting) && (
+                    <ScaleFade in>
+                      <Flex flexDir={"column"} gap={".5rem"} alignItems={"center"}>
+                        <CheckCircleIcon color={"#6EFEC2"} boxSize={7}></CheckCircleIcon>
+                        <Text>link copied</Text>
+                      </Flex>
+                    </ScaleFade>
+                  )}
+                  {!process.includes(EProcess.inviting) && (
+                    <ScaleFade in>
+                      <Text opacity={0.8} fontSize={".9rem"}>
+                        0 REFS
+                      </Text>
+                    </ScaleFade>
                   )}
                 </Text>
               </Button>
@@ -373,7 +507,7 @@ export default function Page() {
             ></Image>
           </Button>
         </ScaleFade>
-        <CircularProgress
+        {/* <CircularProgress
           value={gangScoreProgress.get()}
           bg={"#ffffff0f"}
           backdropFilter={"blur(20px)"}
@@ -391,7 +525,7 @@ export default function Page() {
               <Text>LVL {~~(gangScore / GANG_LEVEL_STEP) + 1}</Text>
             </Flex>
           </CircularProgressLabel>
-        </CircularProgress>
+        </CircularProgress> */}
 
         <ScaleFade in>
           <Menu>

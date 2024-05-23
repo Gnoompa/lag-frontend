@@ -30,7 +30,7 @@ export default function useWallet() {
                 setLinkedWallets(user?.linkedAccounts.filter((account) => account.type == "wallet")));
     }, [ready, wallets, user]);
 
-    useEffect(() => {
+    useEffect(() => { 
         isEmbeddedWalletOnly
             ? embeddedWallet && setSignFn(embeddedSignMessage)
             : wallets[0]
@@ -40,7 +40,7 @@ export default function useWallet() {
                         provider.request({ method: "personal_sign", params: [message, wallets[0].address] })
                     )
                 );
-    }, [embeddedSignMessage, embeddedWallet, externalWallet]);
+    }, [embeddedSignMessage, embeddedWallet, externalWallet, wallets]);
 
     const unlinkWallets = () =>
         Promise.all(

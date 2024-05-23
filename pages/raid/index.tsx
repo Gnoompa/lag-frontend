@@ -103,6 +103,10 @@ export default function Page() {
   const [energy, setEnergy] = useAtom(energyAtom);
 
   const [localEnergy, setLocalEnergy] = useState<number>();
+  const [spentEnergy, setSpentEnergy] = useState<number>(0);
+
+  const stolenEnergy = spentEnergy * 0.15;
+
   const [restoredEnergy, setRestoredEnergy] = useState(0);
 
   const [scoreAnimationToggle, setScoreAnimationToggle] = useBoolean();
@@ -125,6 +129,14 @@ export default function Page() {
       })),
     ]);
   }, []);
+
+  useEffect(() => {
+    ready &&
+      user?.wallet?.address &&
+      authenticated &&
+      signFn &&
+      auth(user?.wallet?.address!, signFn);
+  }, [ready, user, authenticated, signFn]);
 
   useEffect(() => {
     gangsMapRef.current = gangsMap;
@@ -161,10 +173,6 @@ export default function Page() {
   }, [persistedPlayerState, gangsMap]);
 
   useEffect(() => {
-    setLocalEnergy(energy);
-  }, [energy]);
-
-  useEffect(() => {
     debouncedScore && commitScore(debouncedScore);
   }, [debouncedScore]);
 
@@ -199,6 +207,8 @@ export default function Page() {
     if (energy && energy < value) {
       return;
     }
+
+    setSpentEnergy(spentEnergy + value);
 
     setScoreAnimationToggle.toggle();
 
@@ -379,7 +389,7 @@ export default function Page() {
                 <Flex gap={".25rem"} alignItems={"center"}>
                   <ScaleFade in={energy !== undefined}>
                     <Text fontWeight={"bold"} opacity={0.8}>
-                      Energy {Math.round(localEnergy!)} ({ENERGY_RESTORE_PER_SECOND.toFixed(1)} p/s)
+                      Energy {Math.round(energy!)} ({ENERGY_RESTORE_PER_SECOND.toFixed(1)} p/s)
                     </Text>
                   </ScaleFade>
                 </Flex>
@@ -436,6 +446,55 @@ export default function Page() {
           </Flex>
         </Flex>
       </Flex>
+      <ScaleFade
+        in={energy !== undefined && energy < 1000}
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          backdropFilter: "blur(100px)",
+          zIndex: energy !== undefined && energy < 1000 ? 2 : 0,
+        }}
+      >
+        <Flex
+          pos={"fixed"}
+          w={"100vw"}
+          h={"100vh"}
+          top={0}
+          left={0}
+          flexDir={"column"}
+          justify={"center"}
+          align={"center"}
+          gap={"10vh"}
+        >
+          <Flex flexDir={"column"} gap={"1rem"}>
+            {!!spentEnergy && (
+              <Flex flexDir={"column"}>
+                <Text fontSize={"3rem"} fontWeight={"bold"}>
+                  {spentEnergy || 0}
+                </Text>
+                <Text>AP EARNED</Text>
+              </Flex>
+            )}
+            {!!stolenEnergy && (
+              <Flex flexDir={"column"}>
+                <Text fontSize={"3rem"} fontWeight={"bold"}>
+                  {stolenEnergy || 0}
+                </Text>
+                <Text>AP STOLEN</Text>
+              </Flex>
+            )}
+          </Flex>
+          <Flex flexDir={"column"} gap={".25rem"}>
+            <Button onClick={() => router.push(`/gang/${currentGangId}`)}>chill</Button>
+            <Text fontSize={".75rem"} opacity={0.5}>
+              full energy every 60m
+            </Text>
+          </Flex>
+        </Flex>
+      </ScaleFade>
     </Flex>
   );
 }

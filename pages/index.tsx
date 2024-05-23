@@ -30,7 +30,7 @@ export enum EStage {
 export default function Page() {
   const router = useRouter();
 
-  const { ready: privyReady, user, authenticated, isModalOpen } = usePrivy();
+  const { ready: privyReady, user, authenticated, isModalOpen, connectWallet } = usePrivy();
   const { login } = useLogin({
     onComplete(user, isNewUser: boolean, wasAlreadyAuthenticated: boolean) {
       !wasAlreadyAuthenticated && setStage(EStage.confirmed);
@@ -124,24 +124,25 @@ export default function Page() {
       user &&
       signFn &&
       stage === EStage.confirmed &&
-      auth(user.wallet?.address!, signFn);
-  }, [stage, arReady, privyReady, authenticated, user, signFn]);
+      auth(user.wallet?.address!, signFn, router.query.i as string | undefined);
+  }, [stage, arReady, privyReady, authenticated, user, signFn, router]);
 
   useEffect(() => {
     privyReady &&
-      isReady &&
-      arReady &&
+      isReady &&      
       user &&
       authenticated &&
       persistedState &&
       stage === EStage.confirmed &&
-      setStage(
-        // @ts-ignore
-        persistedState.users[getArWallet(user.wallet?.address!)?.address]?.currentGang
-          ? EStage.game
-          : EStage.gangSelection
-      );
-  }, [privyReady, user, arReady, stage, isReady, persistedState, arReady]);
+      (signFn && arReady
+        ? setStage(
+            // @ts-ignore
+            persistedState.users[getArWallet(user.wallet?.address!)?.address]?.currentGang
+              ? EStage.game
+              : EStage.gangSelection
+          )
+        : connectWallet());
+  }, [privyReady, user, arReady, stage, isReady, persistedState, arReady, signFn]);
 
   return (
     <Flex
@@ -193,7 +194,8 @@ export default function Page() {
         }}
       >
         <Button
-          onClick={privyReady && authenticated ? () => setStage(EStage.confirmed) : login}
+          // onClick={privyReady && authenticated ? () => setStage(EStage.confirmed) : login}
+          onClick={connectWallet}
           isLoading={
             !privyReady || !isReady || isModalOpen || (stage === EStage.confirmed && !arReady)
           }
