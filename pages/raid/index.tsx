@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Button,
+  CircularProgress,
+  CircularProgressLabel,
   Flex,
   IconButton,
   Image,
@@ -32,7 +34,7 @@ import {
   persistedPlayerStateAtom,
 } from "@/state";
 import { TNode } from "@/features/useBubbleMap";
-import { ENERGY_RESTORE_PER_SECOND, ERC20_TOKENS, MAX_SCORE } from "@/const";
+import { ENERGY_RESTORE_PER_SECOND, ERC20_TOKENS, MAX_ENERGY, MAX_SCORE } from "@/const";
 import atomWithDebounce from "@/atoms/debouncedAtom";
 import { ChevronLeftIcon, HamburgerIcon } from "@chakra-ui/icons";
 import CircularRim from "@/components/icons/CircularRim";
@@ -203,7 +205,7 @@ export default function Page() {
     }).then(() => setPersistedPlayerScore(score));
   };
 
-  const pump = (value: number = 1000) => {
+  const pump = (value: number = 200) => {
     if (energy && energy < value) {
       return;
     }
@@ -246,7 +248,7 @@ export default function Page() {
                 borderRadius={"full"}
                 boxShadow={"0 0 100px green"}
               ></Image>
-              <Flex pos={"absolute"} justifyContent={"center"} align={"center"} w={"95%"}>
+              {/* <Flex pos={"absolute"} justifyContent={"center"} align={"center"} w={"95%"}>
                 <AnimatePresence>
                   {currentGang && (
                     <motion.div
@@ -263,7 +265,7 @@ export default function Page() {
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </Flex>
+              </Flex> */}
             </Flex>
           </Flex>
         </ScaleFade>
@@ -278,19 +280,30 @@ export default function Page() {
               align={"center"}
               justify={"center"}
             >
-              <Image
-                style={{
-                  transition: ".2s",
-                  transform: `scale(${scoreAnimationToggle ? 1.1 : 1})`,
-                }}
-                src={oppositeGang?.image}
-                margin={"0 auto"}
-                width={["80%"]}
-                borderRadius={"full"}
-                boxShadow={"0 0 100px red"}
-                zIndex={1}
-              ></Image>
-              <Flex pos={"absolute"} justifyContent={"center"} align={"center"} w={"100%"}>
+              <CircularProgress
+                value={energy ? 100 - (100 * (MAX_ENERGY - energy)) / MAX_ENERGY : 0}
+                color="red"
+                w={"100%"}
+                h={"100%"}
+                size={"100%"}
+              >
+                <CircularProgressLabel>
+                  <Image
+                    style={{
+                      transition: ".2s",
+                      transform: `scale(${scoreAnimationToggle ? 1.1 : 1})`,
+                    }}
+                    src={oppositeGang?.image}
+                    filter={`grayscale(${energy ? (MAX_ENERGY - energy) / MAX_ENERGY : 0})`}
+                    margin={"0 auto"}
+                    width={["80%"]}
+                    borderRadius={"full"}
+                    boxShadow={"0 0 100px red"}
+                    zIndex={1}
+                  ></Image>
+                </CircularProgressLabel>
+              </CircularProgress>
+              {/* <Flex pos={"absolute"} justifyContent={"center"} align={"center"} w={"100%"}>
                 <AnimatePresence>
                   {oppositeGang && currentGangId && (
                     <motion.div
@@ -308,7 +321,7 @@ export default function Page() {
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </Flex>
+              </Flex> */}
             </Flex>
           </Flex>
         </ScaleFade>

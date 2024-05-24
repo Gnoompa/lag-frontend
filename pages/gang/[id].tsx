@@ -32,7 +32,12 @@ import useArweave from "@/features/useArweave";
 import { usePrivy } from "@privy-io/react-auth";
 import useWallet from "@/features/useWallet";
 import { useAtom, useAtomValue } from "jotai";
-import { persistedGlobalStateAtom, persistedPlayerStateAtom } from "@/state";
+import {
+  persistedGlobalScoreAtom,
+  persistedGlobalStateAtom,
+  persistedPlayerScoreAtom,
+  persistedPlayerStateAtom,
+} from "@/state";
 import { ERC20_TOKENS, GANG_LEVEL_STEP, GANGS } from "@/const";
 import UserCount from "@/components/icons/UserCount";
 import { CheckCircleIcon, ChevronLeftIcon, HamburgerIcon } from "@chakra-ui/icons";
@@ -42,6 +47,7 @@ import TargetIcon from "@/components/icons/Target";
 import InviteIcon from "@/components/icons/Invite";
 import { useSpring } from "framer-motion";
 import RewardIcon from "@/components/icons/Reward";
+import { AnimatedCounter } from "@/components/Counter";
 
 export enum EStage {
   initial,
@@ -71,9 +77,12 @@ export default function Page() {
 
   const [gang, setGang] = useState<IGang>();
   const [persistedPlayerState, setPersistedPlayerState] = useAtom(persistedPlayerStateAtom);
+  const persistedPlayerScore = useAtomValue(persistedPlayerScoreAtom);
   const persistedGlobalState = useAtomValue(persistedGlobalStateAtom);
   // @ts-ignore
   const currentGangId = persistedPlayerState?.currentGang;
+  // @ts-ignore
+  const playerScore = persistedPlayerScore?.[currentGangId]?.value;
   // @ts-ignore
   const checkins = persistedPlayerState?.checkin;
   const canGangIn = ready && user?.wallet?.address && authenticated && arReady;
@@ -169,11 +178,11 @@ export default function Page() {
   };
 
   const initCheckin = () => {
-    setHasCheckedIn(lastCheckin ? Date.now() - lastCheckin < 24 * 60 * 60 * 1000 - 1 : false);
+    setHasCheckedIn(lastCheckin ? Date.now() - lastCheckin < 12 * 60 * 60 * 1000 - 1 : false);
 
     checkinTimerInterval.current = setInterval(
       () => (
-        setHasCheckedIn(lastCheckin ? Date.now() - lastCheckin < 24 * 60 * 60 * 1000 - 1 : false),
+        setHasCheckedIn(lastCheckin ? Date.now() - lastCheckin < 12 * 60 * 60 * 1000 - 1 : false),
         setNextCheckinTime(
           lastCheckin
             ? ((date): string =>
@@ -183,15 +192,13 @@ export default function Page() {
                     // @ts-ignore
                     +a ? `${a}${["h", "m", "s"][i]}` : i == 1 && !a ? `${b}s` : i == 0 ? b : a,
                   ~~(date / (60 * 60 * 1000))
-                ))(24 * 60 * 60 * 1000 - (+Date.now() - lastCheckin))
+                ))(12 * 60 * 60 * 1000 - (+Date.now() - lastCheckin))
             : undefined
         )
       ),
       1000
     );
   };
-
-  console.log(nextCheckinTime, lastCheckin);
 
   const checkin = () => {
     setProcess([...process, EProcess.checkingIn]);
@@ -526,6 +533,9 @@ export default function Page() {
             </Flex>
           </CircularProgressLabel>
         </CircularProgress> */}
+        <ScaleFade in={playerScore !== undefined}>
+          <AnimatedCounter value={playerScore} color="white" fontSize="2rem" />
+        </ScaleFade>
 
         <ScaleFade in>
           <Menu>

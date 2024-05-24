@@ -103,23 +103,9 @@ export function State() {
 
   useEffect(() => {
     setDebouncedEnergy(energy);
-  }, [energy]);
-
-  console.log(persistedPlayerState)
+  }, [energy]);  
 
   const initEnergy = () => {
-    persistedPlayerState &&
-      console.log(
-        // @ts-ignore
-
-        persistedPlayerState?.energy[persistedPlayerState.currentGang] +
-          ((Date.now() -
-            // @ts-ignore
-            (persistedPlayerState?.score[persistedPlayerState.currentGang]?.lastTimestamp || 0)) /
-            1000) *
-            ENERGY_RESTORE_PER_SECOND
-      );
-
     energyIntervalRef.current === undefined &&
       persistedPlayerState &&
       (setEnergy(
