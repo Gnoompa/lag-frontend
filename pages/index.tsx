@@ -30,7 +30,7 @@ export enum EStage {
 export default function Page() {
   const router = useRouter();
 
-  const { ready: privyReady, user, authenticated, isModalOpen, connectWallet } = usePrivy();
+  const { ready: privyReady, user, authenticated, isModalOpen, connectWallet, logout } = usePrivy();
   const { login } = useLogin({
     onComplete(user, isNewUser: boolean, wasAlreadyAuthenticated: boolean) {
       !wasAlreadyAuthenticated && setStage(EStage.confirmed);
@@ -45,6 +45,11 @@ export default function Page() {
   const [stage, setStage] = useState<EStage>();
   const [loggedIn, setLoggedIn] = useState<boolean>();
   const [passphase, setPassphase] = useState<string>();
+
+  const shortAddress = `${user?.wallet?.address?.substring(
+    0,
+    6
+  )}..${user?.wallet?.address?.substring(6, 10)}`;
 
   const isReady = !!persistedState;
 
@@ -125,16 +130,16 @@ export default function Page() {
       signFn &&
       stage === EStage.confirmed &&
       auth(user.wallet?.address!, signFn, router.query.i as string | undefined);
-  }, [stage, arReady, privyReady, authenticated, user, signFn, router]);
+  }, [stage, privyReady, authenticated, user, signFn, router]);
 
   useEffect(() => {
     privyReady &&
-      isReady &&      
+      isReady &&
       user &&
       authenticated &&
       persistedState &&
       stage === EStage.confirmed &&
-      (signFn && arReady
+      (signFn
         ? setStage(
             // @ts-ignore
             persistedState.users[getArWallet(user.wallet?.address!)?.address]?.currentGang
@@ -143,7 +148,7 @@ export default function Page() {
           )
         : connectWallet());
   }, [privyReady, user, arReady, stage, isReady, persistedState, arReady, signFn]);
-
+  
   return (
     <Flex
       width={"100%"}
@@ -190,12 +195,14 @@ export default function Page() {
           position: "fixed",
           display: "flex",
           alignItems: "center",
-          bottom: "20vh",
+          bottom: "15vh",
+          flexDirection: "column",
+          gap: "1rem",
         }}
       >
         <Button
-          // onClick={privyReady && authenticated ? () => setStage(EStage.confirmed) : login}
-          onClick={connectWallet}
+          onClick={privyReady && authenticated ? () => setStage(EStage.confirmed) : login}
+          // onClick={connectWallet}
           isLoading={
             !privyReady || !isReady || isModalOpen || (stage === EStage.confirmed && !arReady)
           }
@@ -206,6 +213,9 @@ export default function Page() {
         >
           GANG IN
         </Button>
+        {privyReady && user?.wallet && !signFn && (
+          <Button onClick={logout}>logout from {shortAddress}</Button>
+        )}
       </ScaleFade>
     </Flex>
   );
