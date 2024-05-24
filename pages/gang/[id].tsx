@@ -82,12 +82,12 @@ export default function Page() {
   // @ts-ignore
   const currentGangId = persistedPlayerState?.currentGang;
   // @ts-ignore
-  const playerScore = persistedPlayerScore?.[currentGangId]?.value;
-  // @ts-ignore
   const checkins = persistedPlayerState?.checkin;
   const canGangIn = ready && user?.wallet?.address && authenticated && arReady;
 
   const gangId = router.query.id as string;
+  // @ts-ignore
+  const playerScore = persistedPlayerScore?.[gangId]?.value;
   // @ts-ignore
   const gangScore = persistedGlobalState?.score?.[gangId];
 

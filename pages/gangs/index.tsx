@@ -145,54 +145,57 @@ export default function Page() {
                   exit={{ opacity: 0 }}
                   transition={{ delay: gangIndex / 10 }}
                 >
-                  <Accordion variant={"unstyled"} allowMultiple>
+                  {/* <Accordion variant={"unstyled"} allowMultiple>
                     <AccordionItem>
-                      <AccordionButton>
-                        <Container
-                          variant={"accent"}
-                          display={"flex"}
-                          justifyContent={"space-between"}
-                          alignItems={"center"}
-                        >
-                          <Flex alignItems={"center"} gap={".5rem"}>
-                            <Text color={"black"} fontWeight={"bold"} fontSize={"1.25rem"}>
-                              #{gangIndex + 1}
-                            </Text>
-                            <Image
-                              src={gang.image}
-                              fallback={
-                                <svg width="3rem" height="3rem" viewBox="0 0 309 309" fill="none">
-                                  <circle cx="154.5" cy="154.5" r="154.5" fill="black" />
-                                </svg>
-                              }
-                              w={"3rem"}
-                              height={"3rem"}
-                            ></Image>
-                            <Text color={"black"} fontWeight={"bold"}>
-                              {gang.name}
-                            </Text>
-                          </Flex>
-                          {process.includes(EProcess.settingCurrentGang) || !ready || isLoading ? (
+                      <AccordionButton> */}
+                  <Container
+                    onClick={() => router.push(`/gang/${gang.id}`)}
+                    cursor={"pointer"}
+                    variant={"accent"}
+                    display={"flex"}
+                    justifyContent={"space-between"}
+                    alignItems={"center"}
+                  >
+                    <Flex alignItems={"center"} gap={".5rem"}>
+                      <Text color={"black"} fontWeight={"bold"} fontSize={"1.25rem"}>
+                        #{gangIndex + 1}
+                      </Text>
+                      <Image
+                        src={gang.image}
+                        fallback={
+                          <svg width="3rem" height="3rem" viewBox="0 0 309 309" fill="none">
+                            <circle cx="154.5" cy="154.5" r="154.5" fill="black" />
+                          </svg>
+                        }
+                        w={"3rem"}
+                        height={"3rem"}
+                      ></Image>
+                      <Text color={"black"} fontWeight={"bold"}>
+                        {gang.name}
+                      </Text>
+                    </Flex>
+                    {/* {process.includes(EProcess.settingCurrentGang) || !ready || isLoading ? (
                             <Spinner></Spinner>
-                          ) : currentGuildId ? (
-                            <Text fontWeight={"bold"} fontSize={"1.25rem"} color={"black"}>
-                              {gang.score}
-                            </Text>
-                          ) : (
-                            <Button
-                              variant={"secondary"}
-                              onClick={() => onJoinGangButtonClick(gang)}
-                              isLoading={
-                                process.includes(EProcess.settingCurrentGang) || !ready || isLoading
-                              }
-                            >
-                              {!arReady ? "CONNECT" : "GANG IN"}
-                            </Button>
-                          )}
-                        </Container>
-                      </AccordionButton>
-                      <AccordionPanel display={"flex"} justifyContent={"center"}>
-                        <Button
+                          ) : currentGuildId ? ( */}
+
+                    <Text fontWeight={"bold"} fontSize={"1.25rem"} color={"black"}>
+                      {gang.score}
+                    </Text>
+                    {/* ) : (                            
+                            // <Button
+                            //   variant={"secondary"}
+                            //   onClick={() => onJoinGangButtonClick(gang)}
+                            //   isLoading={
+                            //     process.includes(EProcess.settingCurrentGang) || !ready || isLoading
+                            //   }
+                            // >
+                            //   {!arReady ? "CONNECT" : "GANG IN"}
+                            // </Button>
+                          // )} */}
+                  </Container>
+                  {/* </AccordionButton>
+                      <AccordionPanel display={"flex"} justifyContent={"center"}> */}
+                  {/* <Button
                           variant={"secondary"}
                           bg={"white"}
                           color={"black"}
@@ -202,10 +205,10 @@ export default function Page() {
                           }
                         >
                           {!arReady ? "CONNECT" : "GANG IN"}
-                        </Button>
-                      </AccordionPanel>
+                        </Button> */}
+                  {/* </AccordionPanel>
                     </AccordionItem>
-                  </Accordion>
+                  </Accordion> */}
                 </motion.div>
               ))}
           </AnimatePresence>
