@@ -118,7 +118,7 @@ export function State() {
       (setEnergy(
         min([
           // @ts-ignore
-          persistedPlayerState?.energy[persistedPlayerState.currentGang] !== undefined
+          persistedPlayerState?.energy?.[persistedPlayerState.currentGang] !== undefined
             ? // @ts-ignore
               persistedPlayerState?.energy[persistedPlayerState.currentGang] +
               ((Date.now() -

@@ -34,9 +34,10 @@ export default function Providers(props: AppProps) {
   }, []);
 
   const config = createConfig({
-    chains: [mainnet],
+    chains: [mainnet, mantle],
     transports: {
       [mainnet.id]: http(),
+      [mantle.id]: http(),
     },
   });
 

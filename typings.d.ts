@@ -1180,4 +1180,5 @@ interface BasePopupButton {
     name: string;
     score: number;
     image: string;
+    icon: string;
   }

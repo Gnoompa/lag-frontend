@@ -61,7 +61,7 @@ export default function Page() {
   const [stage, setStage] = useState<EStage>(EStage.initial);
 
   const router = useRouter();
-  const { ready, user, login, authenticated } = usePrivy();
+  const { ready, user, login, authenticated, logout } = usePrivy();
   const { signFn } = useWallet();
   const {
     ready: arReady,
@@ -123,13 +123,8 @@ export default function Page() {
   useEffect(() => {
     setLocalEnergy(energy);
 
-    setGangsMap([
-      ...ERC20_TOKENS.map((token) => ({
-        ...token,
-        // @ts-ignore
-        // value: persistedGlobalScore[token.id] || token.value,
-      })),
-    ]);
+    // @ts-ignore
+    setGangsMap(ERC20_TOKENS);
   }, []);
 
   useEffect(() => {
@@ -244,7 +239,8 @@ export default function Page() {
                   transition: ".2s",
                   transform: `scale(${scoreAnimationToggle ? 1 : 1.1})`,
                 }}
-                src={currentGang?.image}
+                // @ts-ignore
+                src={currentGang?.icon}
                 margin={"0 auto"}
                 width={["50%"]}
                 borderRadius={"full"}
@@ -295,7 +291,8 @@ export default function Page() {
                       transition: ".2s",
                       transform: `scale(${scoreAnimationToggle ? 1.1 : 1})`,
                     }}
-                    src={oppositeGang?.image}
+                    // @ts-ignore
+                    src={oppositeGang?.icon}
                     filter={`grayscale(${energy ? (MAX_ENERGY - energy) / MAX_ENERGY : 0})`}
                     margin={"0 auto"}
                     width={["80%"]}
@@ -454,11 +451,11 @@ export default function Page() {
                 >
                   <Flex justifyContent={"space-between"}>
                     <Button
+                      onClick={logout}
                       bg={"black"}
                       p={"1rem"}
                       w={"5rem"}
                       h={"5rem"}
-                      // onClick={invite}
                       _hover={{ bg: "black" }}
                     >
                       <Flex flexDir={"column"} gap={".5rem"} align={"center"}>
@@ -467,7 +464,7 @@ export default function Page() {
                           fontWeight={"bold"}
                           // fontSize={process.includes(EProcess.inviting) ? ".75rem" : "1rem"}
                         >
-                          Account
+                          Logout
                         </Text>
                       </Flex>
                     </Button>

@@ -5,7 +5,6 @@ import {
   Box,
   Button,
   Container,
-  Divider,
   Flex,
   Image,
   Menu,
@@ -35,13 +34,15 @@ import {
 import { ERC20_TOKENS, GANG_LEVEL_STEP, GANGS } from "@/const";
 import UserCount from "@/components/icons/UserCount";
 import { CheckCircleIcon, ChevronLeftIcon, HamburgerIcon } from "@chakra-ui/icons";
-import WideArrow from "@/components/icons/WideArrow";
 import { without } from "lodash";
 import TargetIcon from "@/components/icons/Target";
 import InviteIcon from "@/components/icons/Invite";
 import { useSpring } from "framer-motion";
 import RewardIcon from "@/components/icons/Reward";
 import { AnimatedCounter } from "@/components/Counter";
+import { useReadContract } from "wagmi";
+import { Address, formatEther, parseAbi } from "viem";
+import WalletIcon from "@/components/icons/Wallet";
 
 export enum EStage {
   initial,
@@ -65,7 +66,7 @@ export default function Page() {
   const [nextCheckinTime, setNextCheckinTime] = useState<string>();
 
   const router = useRouter();
-  const { ready, user, login, authenticated } = usePrivy();
+  const { ready, user, login, authenticated, logout } = usePrivy();
   const { signFn } = useWallet();
   const { write, ready: arReady, auth, isLoading, arWallet } = useArweave(user?.wallet?.address);
 
@@ -82,6 +83,20 @@ export default function Page() {
   const refAmount = persistedPlayerState?.invitees?.length || 0;
 
   const gangId = router.query.id as string;
+
+  const {
+    data: gangTokenBalance,
+    error,
+    status,
+  } = useReadContract({
+    //@ts-ignore
+    address: GANGS.filter(({ id }) => id == gangId)[0]?.address,
+    abi: parseAbi(["function balanceOf(address owner) view returns (uint256)"]),
+    functionName: "balanceOf",
+    args: [user?.wallet?.address as Address],
+    chainId: 5000,
+  });
+
   // @ts-ignore
   const playerScore = persistedPlayerScore?.[gangId]?.value;
   // @ts-ignore
@@ -108,8 +123,10 @@ export default function Page() {
 
   useEffect(() => {
     router.query.id &&
+      // @ts-ignore
       setGang(
-        ((token) => ({ ...token, name: token.label, score: token.value }))(
+        // @ts-ignore
+        ((token) => ({ ...token, name: token.label }))(
           ERC20_TOKENS.filter((token) => token.id == router.query.id)[0]
         )
       );
@@ -210,8 +227,6 @@ export default function Page() {
       .finally(() => setProcess(without(process, EProcess.checkingIn)));
   };
 
-  console.log(playerScore)
-
   return (
     <Flex width={"100%"} flexDirection={"column"} alignItems={"center"} padding={"1rem"}>
       <Container
@@ -223,7 +238,7 @@ export default function Page() {
         overflow={"hidden"}
         overflowY={"hidden"}
         maxW={"none"}
-        borderRadius={"0 0 30px 30px"}        
+        borderRadius={"0 0 30px 30px"}
       >
         <Button
           onClick={() =>
@@ -254,7 +269,7 @@ export default function Page() {
           borderRadius={"0 0 30px 30px"}
         >
           <Image
-            src={gang?.image}
+            src={gang?.icon}
             w={"150vw"}
             pos={"absolute"}
             top={0}
@@ -281,7 +296,7 @@ export default function Page() {
         <Flex mt={"-2.5rem"} px={"1.5rem"}>
           <Flex flexDir={"column"} gap={".25rem"} alignItems={"center"}>
             <Image
-              src={gang?.image}
+              src={gang?.icon}
               w={"5rem"}
               borderRadius={"full"}
               border={"4px solid black"}
@@ -346,151 +361,157 @@ export default function Page() {
             </Flex>
           </Flex>
         </Flex> */}
-        <Flex flexDir={"column"} gap={"1rem"}>
-          <Flex gap={"1rem"}>
-            <ScaleFade delay={0.1} in style={{ display: "flex", flex: 0.33 }}>
-              <Button
-                onClick={checkin}
-                variant={"main"}
-                isDisabled={!!hasCheckedIn}
-                isLoading={checkinAmount === undefined || process.includes(EProcess.checkingIn)}
-                flex={1}
-                flexDir={"column"}
-                gap={"1rem"}
-              >
-                <ScaleFade
-                  in={!!checkinAmount}
-                  style={{ position: "absolute", top: "-.5rem", left: "-.5rem" }}
+        {currentGangId === gangId ? (
+          <Flex flexDir={"column"} gap={"1rem"}>
+            <Flex gap={"1rem"}>
+              <ScaleFade delay={0.1} in style={{ display: "flex", flex: 0.33 }}>
+                <Button
+                  onClick={checkin}
+                  variant={"main"}
+                  isDisabled={!!hasCheckedIn}
+                  isLoading={checkinAmount === undefined || process.includes(EProcess.checkingIn)}
+                  flex={1}
+                  flexDir={"column"}
+                  gap={"1rem"}
                 >
-                  <Flex
-                    borderRadius={"full"}
-                    border={"1px solid black"}
-                    bg={"white"}
-                    minW={"1.5rem"}
-                    h="1.5rem"
-                    p={".5rem"}
-                    align={"center"}
-                    justify={"center"}
+                  <ScaleFade
+                    in={!!checkinAmount}
+                    style={{ position: "absolute", top: "-.5rem", left: "-.5rem" }}
                   >
-                    <Text color={"black"} fontSize={".75rem"}>
-                      {checkinAmount}
-                    </Text>
-                  </Flex>
-                </ScaleFade>
-                <Flex flexDir={"column"} align={"center"} gap={".5rem"}>
-                  <Text>CHECK IN</Text>
-                  {checkinAmount !== undefined && checkinAmount == 0 && (
-                    <ScaleFade in>
-                      <Flex gap={".25rem"} align={"baseline"}>
-                        <Text color="accent">3X</Text>
-                        <Text color="accent" fontSize={".75rem"}>
-                          BOOST
-                        </Text>
-                      </Flex>
-                    </ScaleFade>
-                  )}
-                  {hasCheckedIn && !!nextCheckinTime && (
-                    <ScaleFade in>
-                      <Text fontSize={".9rem"} color={"whiteAlpha.500"}>
-                        in {nextCheckinTime}
+                    <Flex
+                      borderRadius={"full"}
+                      border={"1px solid black"}
+                      bg={"white"}
+                      minW={"1.5rem"}
+                      h="1.5rem"
+                      p={".5rem"}
+                      align={"center"}
+                      justify={"center"}
+                    >
+                      <Text color={"black"} fontSize={".75rem"}>
+                        {checkinAmount}
                       </Text>
-                    </ScaleFade>
-                  )}
-                </Flex>
-
-                {/* <Switch size={"lg"}></Switch> */}
-              </Button>
-            </ScaleFade>
-            <ScaleFade delay={0.2} in style={{ display: "flex", flex: 0.67 }}>
-              <Button
-                variant={"main"}
-                // isDisabled={currentGangId !== gangId}
-                onClick={onRaidButtonClick}
-                borderRadius={"xl"}
-                justifyContent={"flex-start"}
-                alignItems={"flex-start"}
-                flex={1}
-                overflow={"hidden"}
-                fontSize={"1.25rem"}
-              >
-                RAID
-                <Box
-                  opacity={0.2}
-                  pos={"absolute"}
-                  right={"-2.5rem"}
-                  top={"20%"}
-                  transform={"rotateZ(20deg)"}
-                >
-                  <TargetIcon />
-                </Box>
-              </Button>
-            </ScaleFade>
-          </Flex>
-          <Flex gap={"1rem"}>
-            <ScaleFade delay={0.3} in style={{ display: "flex", flex: 0.67 }}>
-              <Button
-                flex={1}
-                isDisabled
-                overflow={"hidden"}
-                borderRadius={"xl"}
-                variant={"main"}
-                justifyContent={"flex-start"}
-                alignItems={"flex-start"}
-              >
-                <Flex flexDir={"column"} align={"flex-start"}>
-                  <Text fontSize={"1rem"}>FEELIN&apos;</Text>
-                  <Text fontSize={"1.5rem"}>LUCKY</Text>
-                </Flex>
-
-                <Box opacity={0.2} pos={"absolute"} right={"-2.5rem"} bottom={"-20%"}>
-                  <RewardIcon />
-                </Box>
-              </Button>
-            </ScaleFade>
-            <ScaleFade delay={0.4} in style={{ display: "flex", flex: 0.33 }}>
-              <Button
-                onClick={invite}
-                flex={1}
-                borderRadius={"xl"}
-                overflow={"hidden"}
-                variant={"main"}
-                p={0}
-                flexDir={"column"}
-                alignContent={"center"}
-                justifyContent={"center"}
-                gap={".5rem"}
-              >
-                {!process.includes(EProcess.inviting) && (
-                  <ScaleFade in>
-                    <InviteIcon />
+                    </Flex>
                   </ScaleFade>
-                )}
-                <Text
-                  zIndex={1}
-                  lineHeight={"1rem"}
-                  fontWeight={"bold"}
-                  fontSize={process.includes(EProcess.inviting) ? ".75rem" : "1rem"}
+                  <Flex flexDir={"column"} align={"center"} gap={".5rem"}>
+                    <Text>CHECK IN</Text>
+                    {checkinAmount !== undefined && checkinAmount == 0 && (
+                      <ScaleFade in>
+                        <Flex gap={".25rem"} align={"baseline"}>
+                          <Text color="accent">3X</Text>
+                          <Text color="accent" fontSize={".75rem"}>
+                            BOOST
+                          </Text>
+                        </Flex>
+                      </ScaleFade>
+                    )}
+                    {hasCheckedIn && !!nextCheckinTime && (
+                      <ScaleFade in>
+                        <Text fontSize={".9rem"} color={"whiteAlpha.500"}>
+                          in {nextCheckinTime}
+                        </Text>
+                      </ScaleFade>
+                    )}
+                  </Flex>
+
+                  {/* <Switch size={"lg"}></Switch> */}
+                </Button>
+              </ScaleFade>
+              <ScaleFade delay={0.2} in style={{ display: "flex", flex: 0.67 }}>
+                <Button
+                  variant={"main"}
+                  // isDisabled={currentGangId !== gangId}
+                  onClick={onRaidButtonClick}
+                  borderRadius={"xl"}
+                  justifyContent={"flex-start"}
+                  alignItems={"flex-start"}
+                  flex={1}
+                  overflow={"hidden"}
+                  fontSize={"1.25rem"}
                 >
-                  {process.includes(EProcess.inviting) && (
-                    <ScaleFade in>
-                      <Flex flexDir={"column"} gap={".5rem"} alignItems={"center"}>
-                        <CheckCircleIcon color={"#6EFEC2"} boxSize={7}></CheckCircleIcon>
-                        <Text>link copied</Text>
-                      </Flex>
-                    </ScaleFade>
-                  )}
+                  RAID
+                  <Box
+                    opacity={0.2}
+                    pos={"absolute"}
+                    right={"-2.5rem"}
+                    top={"20%"}
+                    transform={"rotateZ(20deg)"}
+                  >
+                    <TargetIcon />
+                  </Box>
+                </Button>
+              </ScaleFade>
+            </Flex>
+            <Flex gap={"1rem"}>
+              <ScaleFade delay={0.3} in style={{ display: "flex", flex: 0.67 }}>
+                <Button
+                  flex={1}
+                  isDisabled
+                  overflow={"hidden"}
+                  borderRadius={"xl"}
+                  variant={"main"}
+                  justifyContent={"flex-start"}
+                  alignItems={"flex-start"}
+                >
+                  <Flex flexDir={"column"} align={"flex-start"}>
+                    <Text fontSize={"1rem"}>FEELIN&apos;</Text>
+                    <Text fontSize={"1.5rem"}>LUCKY</Text>
+                  </Flex>
+
+                  <Box opacity={0.2} pos={"absolute"} right={"-2.5rem"} bottom={"-20%"}>
+                    <RewardIcon />
+                  </Box>
+                </Button>
+              </ScaleFade>
+              <ScaleFade delay={0.4} in style={{ display: "flex", flex: 0.33 }}>
+                <Button
+                  onClick={invite}
+                  flex={1}
+                  borderRadius={"xl"}
+                  overflow={"hidden"}
+                  variant={"main"}
+                  p={0}
+                  flexDir={"column"}
+                  alignContent={"center"}
+                  justifyContent={"center"}
+                  gap={".5rem"}
+                >
                   {!process.includes(EProcess.inviting) && (
                     <ScaleFade in>
-                      <Text opacity={0.8} fontSize={".9rem"}>
-                        {refAmount} REFS
-                      </Text>
+                      <InviteIcon />
                     </ScaleFade>
                   )}
-                </Text>
-              </Button>
-            </ScaleFade>
+                  <Text
+                    zIndex={1}
+                    lineHeight={"1rem"}
+                    fontWeight={"bold"}
+                    fontSize={process.includes(EProcess.inviting) ? ".75rem" : "1rem"}
+                  >
+                    {process.includes(EProcess.inviting) && (
+                      <ScaleFade in>
+                        <Flex flexDir={"column"} gap={".5rem"} alignItems={"center"}>
+                          <CheckCircleIcon color={"#6EFEC2"} boxSize={7}></CheckCircleIcon>
+                          <Text>link copied</Text>
+                        </Flex>
+                      </ScaleFade>
+                    )}
+                    {!process.includes(EProcess.inviting) && (
+                      <ScaleFade in>
+                        <Text opacity={0.8} fontSize={".9rem"}>
+                          {refAmount} REFS
+                        </Text>
+                      </ScaleFade>
+                    )}
+                  </Text>
+                </Button>
+              </ScaleFade>
+            </Flex>
           </Flex>
-        </Flex>
+        ) : (
+          <Button onClick={joinGang} variant={"accent"} size={"lg"} px={"5rem"} zIndex={"99999"}>
+            GANG IN
+          </Button>
+        )}
         {/* <Text fontWeight={"bold"} mt={"2rem"}>
           About
         </Text> */}
@@ -550,9 +571,21 @@ export default function Page() {
             </Flex>
           </CircularProgressLabel>
         </CircularProgress> */}
-        <ScaleFade in={playerScore !== undefined}>
-          <AnimatedCounter value={playerScore} color="fg" fontSize="2rem" />
-        </ScaleFade>        
+        <ScaleFade in>
+          <Flex flexDir={"column"} gap={".5rem"} justify={"center"} align={"center"}>
+            {!!gangTokenBalance && (
+              <Flex gap={".5rem"} align={"center"} justify={"center"}>
+                <WalletIcon></WalletIcon>
+                <Text fontWeight={"bold"} fontSize={"1.25rem"}>
+                  {(+formatEther(gangTokenBalance)).toFixed(2)}
+                </Text>
+              </Flex>
+            )}
+            <ScaleFade in={playerScore !== undefined}>
+              <AnimatedCounter value={playerScore} color="fg" fontSize="2rem" />
+            </ScaleFade>
+          </Flex>
+        </ScaleFade>
 
         <ScaleFade in>
           <Menu>
@@ -581,6 +614,7 @@ export default function Page() {
             >
               <Flex justifyContent={"space-between"}>
                 <Button
+                  onClick={logout}
                   bg={"black"}
                   p={"1rem"}
                   w={"5rem"}
@@ -594,7 +628,7 @@ export default function Page() {
                       fontWeight={"bold"}
                       // fontSize={process.includes(EProcess.inviting) ? ".75rem" : "1rem"}
                     >
-                      Account
+                      Logout
                     </Text>
                   </Flex>
                 </Button>

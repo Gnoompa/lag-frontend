@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Container, Flex, Image, Text, Button } from "@chakra-ui/react";
+import { Container, Flex, Image, Text, Button, Icon } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import { ERC20_TOKENS } from "@/const";
 import { IGang } from "@/typings";
@@ -44,7 +44,8 @@ export default function Page() {
       setAllGangs(
         sortBy(
           ERC20_TOKENS.map((token) => ({
-            image: token.image,
+            image: token.icon,
+            icon: token.icon,
             name: token.label,
             // @ts-ignore
             score: persistedGlobalScore[token.id] || 0,

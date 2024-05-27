@@ -60,7 +60,8 @@ export default function Page() {
       setAllGangs(
         sortBy(
           ERC20_TOKENS.map((token) => ({
-            image: token.image,
+            image: token.icon,
+            icon: token.icon,
             name: token.label,
             // @ts-ignore
             score: persistedGlobalScore[token.id] || 0,

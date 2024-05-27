@@ -76,28 +76,36 @@ export enum EWinningRole {
 
 export const ERC20_TOKENS = [
   {
-    label: "$INU",
-    id: "inu",
-    image: "https://framerusercontent.com/images/f0KebTk7fBlOgTfRSJe1xIo0HMw.png",
-    value: 213,
+    ticker: "MINU",
+    label: "Mantle Inu",
+    id: "5000:0x51cfe5b1E764dC253F4c8C1f19a081fF4C3517eD",
+    chainId: 5000,
+    address: "0x51cfe5b1E764dC253F4c8C1f19a081fF4C3517eD",
+    icon: "https://framerusercontent.com/images/f0KebTk7fBlOgTfRSJe1xIo0HMw.png",
+
   },
   {
-    label: "$PUFF",
-    id: "puff",
-    image: "https://puffthedragon.xyz/_next/image?url=%2Fimages%2Flogo.webp&w=96&q=75",
-    value: 113,
+    ticker: "PUFF",
+    label: "Puff",
+    id: "5000:0x26a6b0dcdCfb981362aFA56D581e4A7dBA3Be140",
+    chainId: 5000,
+    address: "0x26a6b0dcdCfb981362aFA56D581e4A7dBA3Be140",
+    icon: "https://puffthedragon.xyz/_next/image?url=%2Fimages%2Flogo.webp&w=96&q=75",
   },
   {
-    label: "$SHIB",
-    id: "shib",
-    image: "https://s2.coinmarketcap.com/static/img/coins/200x200/5994.png",
-    value: 73,
+    label: "Merchant Moe",
+    ticker: "MOE",
+    id: "5000:0x4515A45337F461A11Ff0FE8aBF3c606AE5dC00c9",
+    address: "0x4515A45337F461A11Ff0FE8aBF3c606AE5dC00c9",
+    chainId: 5000,
+    icon: "https://dd.dexscreener.com/ds-data/tokens/mantle/0x4515a45337f461a11ff0fe8abf3c606ae5dc00c9.png?size=lg&key=430a64",
   },
 ];
 
 export const GANGS = ERC20_TOKENS.map((token) => ({
-  image: token.image,
+  image: token.icon,
   name: token.label,
+  address: token.address,
   score: 0,
   id: token.id,
 }));

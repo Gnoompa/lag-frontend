@@ -11,7 +11,7 @@ import {
   SlideFade,
   Text,
 } from "@chakra-ui/react";
-import { ERC20_TOKENS, VENDOR_CONFIG } from "@/const";
+import { ERC20_TOKENS, GANGS, VENDOR_CONFIG } from "@/const";
 import { useRouter } from "next/router";
 import useArweave from "@/features/useArweave";
 import { useLogin, usePrivy } from "@privy-io/react-auth";
@@ -107,7 +107,16 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
-    stage === EStage.gangSelection && setTimeout(() => router.push("/gangs"), 500);
+    stage === EStage.gangSelection &&
+      arReady &&
+      setTimeout(
+        () =>
+          router.push({
+            pathname: "/[vendor]/gangs",
+            query: { vendor: router.query.vendor || "main" },
+          }),
+        500
+      );
 
     persistedState &&
       stage === EStage.game &&
@@ -122,7 +131,7 @@ export default function Page() {
           }),
         500
       );
-  }, [user, stage, persistedState, router]);
+  }, [user, stage, persistedState, router, arReady]);
 
   useEffect(() => {
     privyReady &&
@@ -143,7 +152,11 @@ export default function Page() {
       (signFn
         ? setStage(
             // @ts-ignore
-            persistedState.users[getArWallet(user.wallet?.address!)?.address]?.currentGang
+            GANGS.filter(
+              ({ id }) =>
+                // @ts-ignore
+                id == persistedState.users[getArWallet(user.wallet?.address!)?.address]?.currentGang
+            )[0]
               ? EStage.game
               : EStage.gangSelection
           )
