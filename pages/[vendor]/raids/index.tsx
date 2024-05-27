@@ -1,18 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  Container,
-  Flex,
-  Image,
-  Text,
-  Button,
-  Spinner,
-  Accordion,
-  AccordionItem,
-  AccordionButton,
-  AccordionPanel,
-} from "@chakra-ui/react";
+import { Container, Flex, Image, Text, Button } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import { ERC20_TOKENS } from "@/const";
 import { IGang } from "@/typings";
@@ -44,19 +33,14 @@ export default function Page() {
   const [stage, setStage] = useState<EStage>(EStage.initial);
 
   const [allGangs, setAllGangs] = useState<IGang[]>([]);
-  const [currentGuildId, setCurrentGuildId] = useState<string>();
   const persistedGlobalScore = useAtomValue(persistedGlobalScoreAtom);
   const [persistedPlayerState, setPersistedPlayerState] = useAtom(persistedPlayerStateAtom);
   const canGangIn = ready && user?.wallet?.address && authenticated && arReady;
 
   useEffect(() => {
-    persistedPlayerState &&
-      // @ts-ignore
-      setCurrentGuildId(persistedPlayerState?.currentGang);
-  }, [persistedPlayerState]);
-
-  useEffect(() => {
-    persistedGlobalScore &&
+    // @ts-ignore
+    persistedPlayerState?.currentGang &&
+      persistedGlobalScore &&
       setAllGangs(
         sortBy(
           ERC20_TOKENS.map((token) => ({
@@ -65,11 +49,12 @@ export default function Page() {
             // @ts-ignore
             score: persistedGlobalScore[token.id] || 0,
             id: token.id,
-          })),
+            // @ts-ignore
+          })).filter(({ id }) => id !== persistedPlayerState?.currentGang),
           "score"
-        ).reverse()
+        )
       );
-  }, [persistedGlobalScore]);
+  }, [persistedPlayerState, persistedGlobalScore]);
 
   useEffect(() => {
     ready &&
@@ -80,12 +65,8 @@ export default function Page() {
   }, [ready, user, authenticated, signFn]);
 
   useEffect(() => {
-    stage === EStage.game &&
-      // @ts-ignore
-      persistedPlayerState?.currentGang &&
-      // @ts-ignore
-      setTimeout(() => router.push(`/gang/${persistedPlayerState?.currentGang}`));
-  }, [stage, persistedPlayerState]);
+    stage === EStage.game && setTimeout(() => router.push("g"));
+  }, [stage]);
 
   const onJoinGangButtonClick = (gang: IGang) => {
     if (!user?.wallet?.address || !authenticated) {
@@ -100,17 +81,11 @@ export default function Page() {
       return;
     }
 
-    setProcess([...process, EProcess.settingCurrentGang]);
-
-    write({ function: "gang", gang: gang.id })
-      .then(
-        () => (
-          setPersistedPlayerState({ ...persistedPlayerState, currentGang: gang.id }),
-          setStage(EStage.game)
-        )
-      )
-      .catch(() => alert("Oops, smth went wrong..."))
-      .finally(() => setProcess(without(process, EProcess.settingCurrentGang)));
+    router.push({
+      // @ts-ignore
+      pathname: `/[vendor]/raid/${gang.id}`,
+      query: { vendor: router.query.vendor || "main" },
+    });
   };
 
   return (
@@ -123,17 +98,13 @@ export default function Page() {
             exit={{ y: -300, opacity: 0 }}
           >
             <Text variant={"accent"} fontSize={"3rem"}>
-              GANGS
+              RAID
             </Text>
           </motion.div>
         )}
       </AnimatePresence>
-
       <Flex flexDir={"column"} gap={"1rem"} w={"100%"} mt={"2rem"}>
         <Flex flexDir={"column"} gap={"1rem"} alignItems={"center"}>
-          <Text fontWeight={"bold"} fontSize={"1.5rem"}>
-            All
-          </Text>
           <AnimatePresence>
             {stage === EStage.initial &&
               allGangs?.map((gang, gangIndex) => (
@@ -145,12 +116,7 @@ export default function Page() {
                   exit={{ opacity: 0 }}
                   transition={{ delay: gangIndex / 10 }}
                 >
-                  {/* <Accordion variant={"unstyled"} allowMultiple>
-                    <AccordionItem>
-                      <AccordionButton> */}
                   <Container
-                    onClick={() => router.push(`/gang/${gang.id}`)}
-                    cursor={"pointer"}
                     variant={"accent"}
                     display={"flex"}
                     justifyContent={"space-between"}
@@ -174,41 +140,16 @@ export default function Page() {
                         {gang.name}
                       </Text>
                     </Flex>
-                    {/* {process.includes(EProcess.settingCurrentGang) || !ready || isLoading ? (
-                            <Spinner></Spinner>
-                          ) : currentGuildId ? ( */}
-
-                    <Text fontWeight={"bold"} fontSize={"1.25rem"} color={"black"}>
-                      {gang.score}
-                    </Text>
-                    {/* ) : (                            
-                            // <Button
-                            //   variant={"secondary"}
-                            //   onClick={() => onJoinGangButtonClick(gang)}
-                            //   isLoading={
-                            //     process.includes(EProcess.settingCurrentGang) || !ready || isLoading
-                            //   }
-                            // >
-                            //   {!arReady ? "CONNECT" : "GANG IN"}
-                            // </Button>
-                          // )} */}
+                    <Button
+                      variant={"secondary"}
+                      onClick={() => onJoinGangButtonClick(gang)}
+                      isLoading={
+                        process.includes(EProcess.settingCurrentGang) || !ready || isLoading
+                      }
+                    >
+                      {!arReady ? "CONNECT" : "CALL OUT"}
+                    </Button>
                   </Container>
-                  {/* </AccordionButton>
-                      <AccordionPanel display={"flex"} justifyContent={"center"}> */}
-                  {/* <Button
-                          variant={"secondary"}
-                          bg={"white"}
-                          color={"black"}
-                          onClick={() => onJoinGangButtonClick(gang)}
-                          isLoading={
-                            process.includes(EProcess.settingCurrentGang) || !ready || isLoading
-                          }
-                        >
-                          {!arReady ? "CONNECT" : "GANG IN"}
-                        </Button> */}
-                  {/* </AccordionPanel>
-                    </AccordionItem>
-                  </Accordion> */}
                 </motion.div>
               ))}
           </AnimatePresence>

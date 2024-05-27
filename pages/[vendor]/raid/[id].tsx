@@ -90,7 +90,7 @@ export default function Page() {
   const [nextCheckinTime, setNextCheckinTime] = useState<string>();
 
   const persistedGlobalScore = useAtomValue(persistedGlobalScoreAtom);
-  const setPersistedPlayerScore = useSetAtom(persistedPlayerScoreAtom);
+  const [persistedPlayerScore, setPersistedPlayerScore] = useAtom(persistedPlayerScoreAtom);
 
   const [clientPlayerScore, setClientPlayerScore] = useState<number>();
   const [updatedScoreDelta, setUpdatedScoreDelta] = useState<number>(0);
@@ -202,7 +202,9 @@ export default function Page() {
       score,
       id: currentGangId,
       opponent: oppositeGangId,
-    }).then(() => setPersistedPlayerScore(score));
+      // @ts-ignore
+    });
+    // }).then(() => setPersistedPlayerScore({ ...persistedPlayerScore, [currentGangId]: { value: score, value: score } }));
   };
 
   const pump = (value: number = 200) => {
@@ -365,7 +367,17 @@ export default function Page() {
                 transition={{ delay: 0.2 }}
               >
                 {persistedPlayerState ? (
-                  <Button onClick={() => router.push("/gangs")} variant={"accent"} w={"100%"}>
+                  <Button
+                    onClick={() =>
+                      router.push({
+                        // @ts-ignore
+                        pathname: `/[vendor]/gangs`,
+                        query: { vendor: router.query.vendor || "main" },
+                      })
+                    }
+                    variant={"accent"}
+                    w={"100%"}
+                  >
                     GANG UP
                   </Button>
                 ) : ready && !authenticated ? (
@@ -381,10 +393,17 @@ export default function Page() {
           <Flex w={"100%"} alignItems={"center"} justifyContent={"space-between"} px={".5rem"}>
             <ScaleFade in>
               <IconButton
-                onClick={() => router.push(`/gang/${currentGangId}`)}
+                onClick={() =>
+                  router.push({
+                    // @ts-ignore
+                    pathname: `/[vendor]/gang/${currentGangId}`,
+                    query: { vendor: router.query.vendor || "main" },
+                  })
+                }
                 aria-label="back"
                 icon={<ChevronLeftIcon boxSize={10}></ChevronLeftIcon>}
                 variant={"unstyled"}
+                color={"fg"}
               />
             </ScaleFade>
             <Flex
@@ -401,7 +420,7 @@ export default function Page() {
               <Flex flexDir={"column"} gap={".25rem"} alignItems={"center"}>
                 <Flex gap={".25rem"} alignItems={"center"}>
                   <ScaleFade in={energy !== undefined}>
-                    <Text fontWeight={"bold"} opacity={0.8}>
+                    <Text fontWeight={"bold"} opacity={0.8} color={"fg"}>
                       Energy {Math.round(energy!)} ({ENERGY_RESTORE_PER_SECOND.toFixed(1)} p/s)
                     </Text>
                   </ScaleFade>
@@ -423,7 +442,7 @@ export default function Page() {
                   display={"flex"}
                   gap={".5rem"}
                 >
-                  <HamburgerIcon boxSize={6} color={"white"} />
+                  <HamburgerIcon boxSize={6} color={"fg"} />
                 </MenuButton>
                 <MenuList
                   bg={"#ffffffbf"}
@@ -501,7 +520,17 @@ export default function Page() {
             )}
           </Flex>
           <Flex flexDir={"column"} gap={".25rem"}>
-            <Button onClick={() => router.push(`/gang/${currentGangId}`)}>chill</Button>
+            <Button
+              onClick={() =>
+                router.push({
+                  // @ts-ignore
+                  pathname: `/[vendor]/gang/${currentGangId}`,
+                  query: { vendor: router.query.vendor || "main" },
+                })
+              }
+            >
+              chill
+            </Button>
             <Text fontSize={".75rem"} opacity={0.5}>
               full energy every 60m
             </Text>

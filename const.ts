@@ -1,3 +1,5 @@
+// use client
+
 export const GENESIS_EPOCH_TIMESTAMP = 1711384626;
 export const GAME_STAGES_DURATION = [60, 30, 30];
 
@@ -5,7 +7,45 @@ export const MAX_SCORE = 10_000;
 export const MAX_ENERGY = 10_000;
 export const SCORE_ENERGY_RECHARGE_INTERVAL = 3_600; // p/s
 export const ENERGY_RESTORE_PER_SECOND = MAX_ENERGY / SCORE_ENERGY_RECHARGE_INTERVAL;
-export const GANG_LEVEL_STEP = 10_000
+export const GANG_LEVEL_STEP = 10_000;
+
+// @ts-ignore
+// export const VENDOR_CONFIG = {
+//   colors: {
+//     bg: "linear-gradient(180deg, #D4C1B0 0%, #FEFCFF 100%)",
+//     fg: "black"
+//   },
+//   labels: {
+//     vendor: "Lisan al Gaib",
+//     welcome: "degENTER"
+//   },
+//   assets: {
+//     starter: "/lag.png"
+//   }
+// } as {
+export const VENDOR_CONFIG = global.__LAG_VENDOR_CONFIG as {
+  preset?: "rugged" | "smooth";
+  colors?: {
+    bg?: string;
+    cbg?: string;
+    fg?: string;
+    cfg?: string;
+  };
+  assets?: {
+    starter?: string;
+    token?: string;
+    energy?: string;
+  };
+  labels?: {
+    vendor?: string;
+    welcome?: string;
+    token?: string;
+    energy?: string;
+    raid?: string;
+    lottery?: string;
+    checkin?: string;
+  };
+};
 
 export enum EGameStage {
   Active,

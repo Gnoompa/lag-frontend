@@ -4,14 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Button,
   Flex,
+  Image,
   PinInput,
   PinInputField,
   ScaleFade,
   SlideFade,
   Text,
 } from "@chakra-ui/react";
-import { ERC20_TOKENS } from "@/const";
-import useBubbleMap from "@/features/useBubbleMap";
+import { ERC20_TOKENS, VENDOR_CONFIG } from "@/const";
 import { useRouter } from "next/router";
 import useArweave from "@/features/useArweave";
 import { useLogin, usePrivy } from "@privy-io/react-auth";
@@ -84,9 +84,9 @@ export default function Page() {
     []
   );
 
-  const { render: renderBubblemap, unmount: removeBubblemap } = useBubbleMap(bubbleMapItems, {
-    height: global.innerHeight * 0.7,
-  });
+  // const { render: renderBubblemap, unmount: removeBubblemap } = useBubbleMap(bubbleMapItems, {
+  //   height: global.innerHeight * 0.7,
+  // });
 
   const checkLogin = (value: string) => {
     setPassphase(value?.toLocaleLowerCase());
@@ -103,7 +103,7 @@ export default function Page() {
 
     setLoggedIn(localStorage.getItem("loginpasscode") === "lagin");
 
-    return removeBubblemap;
+    // return removeBubblemap;
   }, []);
 
   useEffect(() => {
@@ -113,15 +113,16 @@ export default function Page() {
       stage === EStage.game &&
       setTimeout(
         () =>
-          router.push(
-            `/gang/${
+          router.push({
+            pathname: `/[vendor]/gang/${
               // @ts-ignore
               persistedState.users[getArWallet(user.wallet?.address!)?.address].currentGang
-            }`
-          ),
+            }`,
+            query: { vendor: router.query.vendor || "main" },
+          }),
         500
       );
-  }, [user, stage, persistedState]);
+  }, [user, stage, persistedState, router]);
 
   useEffect(() => {
     privyReady &&
@@ -148,15 +149,37 @@ export default function Page() {
           )
         : connectWallet());
   }, [privyReady, user, arReady, stage, isReady, persistedState, arReady, signFn]);
-  
+
   return (
     <Flex
       width={"100%"}
       flexDirection={"column"}
       alignItems={"center"}
       padding={"1rem"}
+      py={"2rem"}
       height={"100vh"}
+      justifyContent={"space-between"}
+      suppressHydrationWarning
     >
+      <Text fontSize={"2rem"} fontWeight={"bold"} color={"fg"} suppressHydrationWarning>
+        {VENDOR_CONFIG?.labels?.vendor || "XLAG"}
+      </Text>
+
+      {VENDOR_CONFIG?.assets?.starter ? (
+        <ScaleFade in suppressHydrationWarning>
+          <Image
+            src={VENDOR_CONFIG?.assets?.starter}
+            maxW={"80vw"}
+            pb={"5rem"}
+            suppressHydrationWarning
+          ></Image>
+        </ScaleFade>
+      ) : (
+        <Text fontSize={"4rem"} suppressHydrationWarning>
+          💥🤑🎰
+        </Text>
+      )}
+
       <SlideFade
         in={loggedIn === false}
         style={{
@@ -217,6 +240,15 @@ export default function Page() {
           <Button onClick={logout}>logout from {shortAddress}</Button>
         )}
       </ScaleFade>
+
+      <Flex style={{ gap: ".5rem" }} alignItems={"flex-end"} height={"2rem"}>
+        <Text mb={"1rem"} fontSize={".75rem"}>
+          BY
+        </Text>
+        <Text mb={"1rem"} fontSize={"1rem"}>
+          XLAG.TECH
+        </Text>
+      </Flex>
     </Flex>
   );
 }

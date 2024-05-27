@@ -81,7 +81,7 @@ const NumberColumn = ({ digit, delta, fontSize, color, incrementColor, decrement
                 fontWeight: "bold",
                 fontSize: fontSize,
                 lineHeight: fontSize,
-                color: "white",
+                color: "var(--chakra-colors-fg)",
               }}
             >
               {num}

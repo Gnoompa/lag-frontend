@@ -4,8 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import {
   Box,
   Button,
-  CircularProgress,
-  CircularProgressLabel,
   Container,
   Divider,
   Flex,
@@ -20,9 +18,6 @@ import {
   ModalFooter,
   ModalOverlay,
   ScaleFade,
-  Show,
-  SlideFade,
-  Switch,
   Text,
   useDisclosure,
 } from "@chakra-ui/react";
@@ -33,7 +28,6 @@ import { usePrivy } from "@privy-io/react-auth";
 import useWallet from "@/features/useWallet";
 import { useAtom, useAtomValue } from "jotai";
 import {
-  persistedGlobalScoreAtom,
   persistedGlobalStateAtom,
   persistedPlayerScoreAtom,
   persistedPlayerStateAtom,
@@ -84,6 +78,8 @@ export default function Page() {
   // @ts-ignore
   const checkins = persistedPlayerState?.checkin;
   const canGangIn = ready && user?.wallet?.address && authenticated && arReady;
+  // @ts-ignore
+  const refAmount = persistedPlayerState?.invitees?.length || 0;
 
   const gangId = router.query.id as string;
   // @ts-ignore
@@ -151,7 +147,12 @@ export default function Page() {
   };
 
   const onRaidButtonClick = () =>
-    currentGangId === gangId ? router.push(`/raids`) : onJoinGangModalOpen();
+    currentGangId === gangId
+      ? router.push({
+          pathname: `/[vendor]/raids`,
+          query: { vendor: router.query.vendor || "main" },
+        })
+      : onJoinGangModalOpen();
 
   const joinGang = () => {
     write({ function: "gang", gang: gangId })
@@ -209,6 +210,8 @@ export default function Page() {
       .finally(() => setProcess(without(process, EProcess.checkingIn)));
   };
 
+  console.log(playerScore)
+
   return (
     <Flex width={"100%"} flexDirection={"column"} alignItems={"center"} padding={"1rem"}>
       <Container
@@ -220,10 +223,15 @@ export default function Page() {
         overflow={"hidden"}
         overflowY={"hidden"}
         maxW={"none"}
-        borderRadius={"0 0 30px 30px"}
+        borderRadius={"0 0 30px 30px"}        
       >
         <Button
-          onClick={() => router.push("/gangs")}
+          onClick={() =>
+            router.push({
+              pathname: `/[vendor]/gangs`,
+              query: { vendor: router.query.vendor || "main" },
+            })
+          }
           pos={"fixed"}
           variant={"unstyled"}
           top={"1rem"}
@@ -266,6 +274,7 @@ export default function Page() {
           pos={"fixed"}
           overflow={"hidden"}
           borderRadius={"0 0 30px 30px"}
+          border={"2px solid black"}
         ></Container>
       </Container>
       <Container mt={"20vh"} pos={"absolute"} top={0}>
@@ -301,7 +310,7 @@ export default function Page() {
         px={"1rem"}
         w={"min(100%, 30rem)"}
       >
-        <Flex
+        {/* <Flex
           bg={"whiteAlpha.200"}
           p=".5rem 1.5rem"
           gap={"1rem"}
@@ -336,7 +345,7 @@ export default function Page() {
               <Text fontWeight={"bold"}>0</Text>
             </Flex>
           </Flex>
-        </Flex>
+        </Flex> */}
         <Flex flexDir={"column"} gap={"1rem"}>
           <Flex gap={"1rem"}>
             <ScaleFade delay={0.1} in style={{ display: "flex", flex: 0.33 }}>
@@ -355,6 +364,7 @@ export default function Page() {
                 >
                   <Flex
                     borderRadius={"full"}
+                    border={"1px solid black"}
                     bg={"white"}
                     minW={"1.5rem"}
                     h="1.5rem"
@@ -379,11 +389,13 @@ export default function Page() {
                       </Flex>
                     </ScaleFade>
                   )}
-                  <ScaleFade in={hasCheckedIn && !!nextCheckinTime}>
-                    <Text fontSize={".9rem"} color={"whiteAlpha.500"}>
-                      in {nextCheckinTime}
-                    </Text>
-                  </ScaleFade>
+                  {hasCheckedIn && !!nextCheckinTime && (
+                    <ScaleFade in>
+                      <Text fontSize={".9rem"} color={"whiteAlpha.500"}>
+                        in {nextCheckinTime}
+                      </Text>
+                    </ScaleFade>
+                  )}
                 </Flex>
 
                 {/* <Switch size={"lg"}></Switch> */}
@@ -470,7 +482,7 @@ export default function Page() {
                   {!process.includes(EProcess.inviting) && (
                     <ScaleFade in>
                       <Text opacity={0.8} fontSize={".9rem"}>
-                        0 REFS
+                        {refAmount} REFS
                       </Text>
                     </ScaleFade>
                   )}
@@ -496,7 +508,12 @@ export default function Page() {
           <Button
             isDisabled={currentGangId == router.query.id}
             isLoading={!currentGangId}
-            onClick={() => router.push(`/gang/${currentGangId}`)}
+            onClick={() =>
+              router.push({
+                pathname: `/[vendor]/gang/${currentGangId}`,
+                query: { vendor: router.query.vendor || "main" },
+              })
+            }
             variant={"unstyled"}
             // p={".5rem"}
             w={"3rem"}
@@ -534,8 +551,8 @@ export default function Page() {
           </CircularProgressLabel>
         </CircularProgress> */}
         <ScaleFade in={playerScore !== undefined}>
-          <AnimatedCounter value={playerScore} color="white" fontSize="2rem" />
-        </ScaleFade>
+          <AnimatedCounter value={playerScore} color="fg" fontSize="2rem" />
+        </ScaleFade>        
 
         <ScaleFade in>
           <Menu>

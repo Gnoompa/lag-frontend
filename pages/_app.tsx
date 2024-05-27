@@ -27,6 +27,12 @@ export default function Providers(props: AppProps) {
 
   const [queryClient] = useState(() => new QueryClient());
 
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
   const config = createConfig({
     chains: [mainnet],
     transports: {
@@ -34,7 +40,9 @@ export default function Providers(props: AppProps) {
     },
   });
 
-  return (
+  return !hasMounted ? (
+    <></>
+  ) : (
     <>
       <Head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />

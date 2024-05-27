@@ -26,6 +26,7 @@ import {
 import useArweave from "@/features/useArweave";
 import { min } from "lodash";
 import { useAtom, useSetAtom } from "jotai";
+import { useRouter } from "next/router";
 
 export const getCurrentEpoch = () =>
   ~~((Date.now() / 1000 - GENESIS_EPOCH_TIMESTAMP) / GAME_STAGES_DURATION[0]);
@@ -40,6 +41,8 @@ export function State() {
   const { ready: arReady, read, readState, arWallet } = useArweave(user?.wallet?.address);
 
   const [energy, setEnergy] = useAtom(energyAtom);
+
+  const router = useRouter();
 
   const [arContractState, setArContractState] = useAtom(arContractStateAtom);
 
@@ -103,7 +106,11 @@ export function State() {
 
   useEffect(() => {
     setDebouncedEnergy(energy);
-  }, [energy]);  
+  }, [energy]);
+
+  useEffect(() => {
+    router && syncArContractState();
+  }, [router]);
 
   const initEnergy = () => {
     energyIntervalRef.current === undefined &&

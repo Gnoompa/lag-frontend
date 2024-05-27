@@ -13,7 +13,11 @@ export default function Document() {
         />
       </Head>
       <body>
-        <Script strategy="beforeInteractive" src="https://telegram.org/js/telegram-web-app.js" />
+        <Script strategy="beforeInteractive" src="/vendor" referrerPolicy="same-origin"></Script>
+        <Script
+          strategy="beforeInteractive"
+          src="https://telegram.org/js/telegram-web-app.js"
+        ></Script>
         <Main />
         <NextScript />
       </body>
