@@ -1,28 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import {
-  Container,
-  Flex,
-  Image,
-  Text,
-  Button,
-  Spinner,
-  Accordion,
-  AccordionItem,
-  AccordionButton,
-  AccordionPanel,
-} from "@chakra-ui/react";
+import { useEffect, useRef, useState } from "react";
+import { Button, Container, Flex, Image, Text } from "@chakra-ui/react";
 import { useRouter } from "next/router";
-import { ERC20_TOKENS } from "@/const";
 import { IGang } from "@/typings";
 import { motion, AnimatePresence } from "framer-motion";
 import useArweave from "@/features/useArweave";
-import { sortBy, without } from "lodash";
+import { forEach, sortBy, without } from "lodash";
 import { usePrivy } from "@privy-io/react-auth";
 import useWallet from "@/features/useWallet";
 import { useAtom, useAtomValue } from "jotai";
-import { persistedGlobalScoreAtom, persistedPlayerStateAtom } from "@/state";
+import { persistedGlobalScoreAtom, persistedPlayerStateAtom, persistedStateAtom } from "@/state";
 
 export enum EStage {
   initial,
@@ -34,7 +22,7 @@ export default function Page() {
     settingCurrentGang,
   }
 
-  const [process, setProcess] = useState<EProcess[]>([]);
+  const [processes, setProcesses] = useState<EProcess[]>([]);
 
   const router = useRouter();
   const { ready, user, login, authenticated } = usePrivy();
@@ -44,8 +32,13 @@ export default function Page() {
   const [stage, setStage] = useState<EStage>(EStage.initial);
 
   const [allGangs, setAllGangs] = useState<IGang[]>([]);
+  const [gangMetadata, setGangMetadata] = useState<{
+    [gangId: string]: { name: string; ticker: string; image: string };
+  }>();
+  const gangMetadataRef = useRef(gangMetadata);
   const [currentGuildId, setCurrentGuildId] = useState<string>();
   const persistedGlobalScore = useAtomValue(persistedGlobalScoreAtom);
+  const persistedState = useAtomValue(persistedStateAtom);
   const [persistedPlayerState, setPersistedPlayerState] = useAtom(persistedPlayerStateAtom);
   const canGangIn = ready && user?.wallet?.address && authenticated && arReady;
 
@@ -57,20 +50,39 @@ export default function Page() {
 
   useEffect(() => {
     persistedGlobalScore &&
+      persistedState &&
       setAllGangs(
         sortBy(
-          ERC20_TOKENS.map((token) => ({
-            image: token.icon,
-            icon: token.icon,
-            name: token.label,
+          // @ts-ignore
+          forEach(persistedState.gangs, (gang) => ({
+            metadata: gang.metadata,
             // @ts-ignore
-            score: persistedGlobalScore[token.id] || 0,
-            id: token.id,
+            score: persistedGlobalScore[gang.id] || 0,
+            id: gang.id,
           })),
           "score"
         ).reverse()
       );
-  }, [persistedGlobalScore]);
+  }, [persistedState, persistedGlobalScore]);
+
+  useEffect(() => {
+    gangMetadataRef.current = gangMetadata;
+  }, [gangMetadata]);
+
+  useEffect(() => {
+    allGangs?.map(
+      (gang) =>
+        !gangMetadata?.[gang.id] &&
+        fetch(`${process.env.NEXT_PUBLIC_IPFS_GATEWAY}ipfs/${gang.metadata}`)
+          .then((res) => res.json())
+          .then((metadata) =>
+            setGangMetadata({
+              ...gangMetadataRef.current,
+              [gang.id]: metadata,
+            })
+          )
+    );
+  }, [allGangs]);
 
   useEffect(() => {
     ready &&
@@ -107,7 +119,7 @@ export default function Page() {
       return;
     }
 
-    setProcess([...process, EProcess.settingCurrentGang]);
+    setProcesses([...processes, EProcess.settingCurrentGang]);
 
     write({ function: "gang", gang: gang.id })
       .then(
@@ -117,7 +129,7 @@ export default function Page() {
         )
       )
       .catch(() => alert("Oops, smth went wrong..."))
-      .finally(() => setProcess(without(process, EProcess.settingCurrentGang)));
+      .finally(() => setProcesses(without(processes, EProcess.settingCurrentGang)));
   };
 
   return (
@@ -128,19 +140,12 @@ export default function Page() {
             initial={{ y: 300, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -300, opacity: 0 }}
-          >
-            <Text variant={"accent"} fontSize={"3rem"}>
-              GANGS
-            </Text>
-          </motion.div>
+          ></motion.div>
         )}
       </AnimatePresence>
 
       <Flex flexDir={"column"} gap={"1rem"} w={"100%"} mt={"2rem"}>
         <Flex flexDir={"column"} gap={"1rem"} alignItems={"center"}>
-          <Text fontWeight={"bold"} fontSize={"1.5rem"}>
-            All
-          </Text>
           <AnimatePresence>
             {stage === EStage.initial &&
               allGangs?.map((gang, gangIndex) => (
@@ -174,7 +179,9 @@ export default function Page() {
                         #{gangIndex + 1}
                       </Text>
                       <Image
-                        src={gang.image}
+                        src={`${process.env.NEXT_PUBLIC_IPFS_GATEWAY}ipfs/${
+                          gangMetadata?.[gang.id]?.image
+                        }`}
                         fallback={
                           <svg width="3rem" height="3rem" viewBox="0 0 309 309" fill="none">
                             <circle cx="154.5" cy="154.5" r="154.5" fill="black" />
@@ -184,7 +191,7 @@ export default function Page() {
                         height={"3rem"}
                       ></Image>
                       <Text color={"black"} fontWeight={"bold"}>
-                        {gang.name}
+                        {gangMetadata?.[gang.id]?.name}
                       </Text>
                     </Flex>
                     {/* {process.includes(EProcess.settingCurrentGang) || !ready || isLoading ? (
@@ -226,6 +233,27 @@ export default function Page() {
               ))}
           </AnimatePresence>
         </Flex>
+      </Flex>
+      <Flex p={"1rem"} bg={"bg"} w={"100%"} pos={"fixed"} h={"4.5rem"} bottom={"0"}>
+        <Button
+          onClick={() =>
+            router.push({
+              pathname: `/[vendor]/launch`,
+              // @ts-ignore
+              query: { vendor: router.query.vendor || "main" },
+            })
+          }
+          variant={"accent"}
+          m={"0 auto"}
+          size={"sm"}
+          bg={"bg"}
+          color={"fg"}
+          borderColor={"fg"}
+          px={"2rem"}
+          zIndex={"99999"}
+        >
+          🚀 LAUNCH TOKEN
+        </Button>
       </Flex>
     </Flex>
   );

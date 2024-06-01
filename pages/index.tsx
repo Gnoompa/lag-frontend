@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  Box,
   Button,
   Flex,
   Image,
@@ -169,16 +170,24 @@ export default function Page() {
       flexDirection={"column"}
       alignItems={"center"}
       padding={"1rem"}
-      py={"2rem"}
+      p={"30vh 0rem 10vh"}
       height={"100vh"}
       justifyContent={"space-between"}
       suppressHydrationWarning
     >
-      <Text fontSize={"2rem"} fontWeight={"bold"} color={"fg"} suppressHydrationWarning>
-        {VENDOR_CONFIG?.labels?.vendor || "XLAG"}
-      </Text>
+      <Box className="glitch gl-4">
+        <Text
+          data-text="LAG"
+          fontSize={"5rem"}
+          fontWeight={"bold"}
+          color={"fg"}
+          suppressHydrationWarning
+        >
+          {VENDOR_CONFIG?.labels?.vendor || "LAG"}
+        </Text>
+      </Box>
 
-      {VENDOR_CONFIG?.assets?.starter ? (
+      {VENDOR_CONFIG?.assets?.starter && (
         <ScaleFade in suppressHydrationWarning>
           <Image
             src={VENDOR_CONFIG?.assets?.starter}
@@ -187,10 +196,6 @@ export default function Page() {
             suppressHydrationWarning
           ></Image>
         </ScaleFade>
-      ) : (
-        <Text fontSize={"4rem"} suppressHydrationWarning>
-          💥🤑🎰
-        </Text>
       )}
 
       <SlideFade
@@ -224,43 +229,57 @@ export default function Page() {
           </Text>
         </Flex>
       </SlideFade>
-      <ScaleFade
-        delay={0.3}
-        in={stage !== EStage.login && loggedIn}
-        style={{
-          position: "fixed",
-          display: "flex",
-          alignItems: "center",
-          bottom: "15vh",
-          flexDirection: "column",
-          gap: "1rem",
-        }}
-      >
-        <Button
-          onClick={privyReady && authenticated ? () => setStage(EStage.confirmed) : login}
-          // onClick={connectWallet}
-          isLoading={
-            !privyReady || !isReady || isModalOpen || (stage === EStage.confirmed && !arReady)
-          }
-          variant={"accent"}
-          size={"lg"}
-          px={"5rem"}
-          zIndex={"99999"}
+      <Flex flexDir={"column"} gap={"2rem"} align={"center"} justify={"center"}>
+        <ScaleFade
+          delay={0.3}
+          in={stage !== EStage.login && loggedIn}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            bottom: "15vh",
+            flexDirection: "column",
+            gap: "1rem",
+          }}
         >
-          GANG IN
-        </Button>
-        {privyReady && user?.wallet && !signFn && (
-          <Button onClick={logout}>logout from {shortAddress}</Button>
-        )}
-      </ScaleFade>
+          <Flex pos={"relative"}>
+            <Button
+              onClick={privyReady && authenticated ? () => setStage(EStage.confirmed) : login}
+              // onClick={connectWallet}
+              isLoading={
+                !privyReady || !isReady || isModalOpen || (stage === EStage.confirmed && !arReady)
+              }
+              variant={"accent"}
+              size={"lg"}
+              px={"5rem"}
+              zIndex={"99999"}
+            >
+              LAG IN
+            </Button>
+            <Text
+              fontSize={"3rem"}
+              pos={"absolute"}
+              top={"-2.5rem"}
+              whiteSpace={"nowrap"}
+              left={"50%"}
+              transform={"translateX(-50%)"}
+            >
+              💥🎰🤑
+            </Text>
+          </Flex>
 
-      <Flex style={{ gap: ".5rem" }} alignItems={"flex-end"} height={"2rem"}>
-        <Text mb={"1rem"} fontSize={".75rem"}>
-          BY
-        </Text>
-        <Text mb={"1rem"} fontSize={"1rem"}>
-          XLAG.TECH
-        </Text>
+          {privyReady && user?.wallet && !signFn && (
+            <Button onClick={logout}>logout from {shortAddress}</Button>
+          )}
+        </ScaleFade>
+
+        <Flex style={{ gap: ".5rem" }} alignItems={"flex-end"} height={"2rem"} opacity={.5}>
+          <Text mb={"1rem"} fontSize={".75rem"}>
+            BY
+          </Text>
+          <Text mb={"1rem"} fontSize={"1rem"}>
+            XLAG.TECH
+          </Text>
+        </Flex>
       </Flex>
     </Flex>
   );

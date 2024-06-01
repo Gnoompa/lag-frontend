@@ -17,6 +17,7 @@ import {
   ModalFooter,
   ModalOverlay,
   ScaleFade,
+  Spinner,
   Text,
   useDisclosure,
 } from "@chakra-ui/react";
@@ -30,8 +31,9 @@ import {
   persistedGlobalStateAtom,
   persistedPlayerScoreAtom,
   persistedPlayerStateAtom,
+  persistedStateAtom,
 } from "@/state";
-import { ERC20_TOKENS, GANG_LEVEL_STEP, GANGS } from "@/const";
+import { GANG_LEVEL_STEP, GANGS } from "@/const";
 import UserCount from "@/components/icons/UserCount";
 import { CheckCircleIcon, ChevronLeftIcon, HamburgerIcon } from "@chakra-ui/icons";
 import { without } from "lodash";
@@ -56,7 +58,7 @@ export default function Page() {
     checkingIn,
   }
 
-  const [process, setProcess] = useState<EProcess[]>([]);
+  const [processes, setProcesses] = useState<EProcess[]>([]);
   const [stage, setStage] = useState<EStage>(EStage.initial);
 
   const [lastCheckin, setLastCheckin] = useState<number>();
@@ -71,6 +73,12 @@ export default function Page() {
   const { write, ready: arReady, auth, isLoading, arWallet } = useArweave(user?.wallet?.address);
 
   const [gang, setGang] = useState<IGang>();
+  const [gangMetadata, setGangMetadata] = useState<{
+    name: string;
+    image: string;
+    ticker: string;
+  }>();
+  const persistedState = useAtomValue(persistedStateAtom);
   const [persistedPlayerState, setPersistedPlayerState] = useAtom(persistedPlayerStateAtom);
   const persistedPlayerScore = useAtomValue(persistedPlayerScoreAtom);
   const persistedGlobalState = useAtomValue(persistedGlobalStateAtom);
@@ -122,15 +130,22 @@ export default function Page() {
   }, [gangScore]);
 
   useEffect(() => {
-    router.query.id &&
+    // @ts-ignore
+    persistedState?.gangs?.[router.query.id] &&
       // @ts-ignore
       setGang(
         // @ts-ignore
-        ((token) => ({ ...token, name: token.label }))(
-          ERC20_TOKENS.filter((token) => token.id == router.query.id)[0]
-        )
+        persistedState.gangs[router.query.id]
       );
-  }, [router]);
+  }, [router, persistedState]);
+
+  useEffect(() => {
+    gang &&
+      // @ts-ignore
+      fetch(`${process.env.NEXT_PUBLIC_IPFS_GATEWAY}ipfs/${gang.metadata}`)
+        .then((res) => res.json())
+        .then(setGangMetadata);
+  }, [gang]);
 
   useEffect(() => {
     clearInterval(checkinTimerInterval.current);
@@ -156,9 +171,9 @@ export default function Page() {
   }, [persistedPlayerState, gangId]);
 
   const invite = () => {
-    setProcess([...process, EProcess.inviting]);
+    setProcesses([...processes, EProcess.inviting]);
 
-    setTimeout(() => setProcess(without(process, EProcess.inviting)), 2000);
+    setTimeout(() => setProcesses(without(processes, EProcess.inviting)), 2000);
 
     navigator.clipboard.writeText(`${location.origin}/?i=${arWallet?.address}`);
   };
@@ -176,17 +191,17 @@ export default function Page() {
       .then(
         () => (
           setPersistedPlayerState({ ...persistedPlayerState, currentGang: gangId }),
-          setProcess([...process, EProcess.settingCurrentGang])
+          setProcesses([...processes, EProcess.settingCurrentGang])
         )
       )
       .catch(() => alert("Oops, smth went wrong..."))
       .finally(
         () => (
-          setProcess([...process, EProcess.hasSetCurrentGang]),
+          setProcesses([...processes, EProcess.hasSetCurrentGang]),
           setTimeout(
             () => (
-              setProcess(without(process, EProcess.settingCurrentGang)),
-              setProcess(without(process, EProcess.hasSetCurrentGang)),
+              setProcesses(without(processes, EProcess.settingCurrentGang)),
+              setProcesses(without(processes, EProcess.hasSetCurrentGang)),
               onJoinGangModalClose()
             ),
             1000
@@ -219,15 +234,15 @@ export default function Page() {
   };
 
   const checkin = () => {
-    setProcess([...process, EProcess.checkingIn]);
+    setProcesses([...processes, EProcess.checkingIn]);
 
     write({ function: "checkin", gangId: currentGangId })
       .then(() => (setLastCheckin(+Date.now()), setCheckinAmount(checkinAmount! + 1)))
       .catch(() => alert("Oops, smth went wrong..."))
-      .finally(() => setProcess(without(process, EProcess.checkingIn)));
+      .finally(() => setProcesses(without(processes, EProcess.checkingIn)));
   };
 
-  return (
+  return gangMetadata ? (
     <Flex width={"100%"} flexDirection={"column"} alignItems={"center"} padding={"1rem"}>
       <Container
         h={"20vh"}
@@ -269,7 +284,8 @@ export default function Page() {
           borderRadius={"0 0 30px 30px"}
         >
           <Image
-            src={gang?.icon}
+            // @ts-ignore
+            src={`${process.env.NEXT_PUBLIC_IPFS_GATEWAY}ipfs/${gangMetadata.image}`}
             w={"150vw"}
             pos={"absolute"}
             top={0}
@@ -296,8 +312,10 @@ export default function Page() {
         <Flex mt={"-2.5rem"} px={"1.5rem"}>
           <Flex flexDir={"column"} gap={".25rem"} alignItems={"center"}>
             <Image
-              src={gang?.icon}
+              //@ts-ignore
+              src={`${process.env.NEXT_PUBLIC_IPFS_GATEWAY}ipfs/${gangMetadata.image}`}
               w={"5rem"}
+              h={"5rem"}
               borderRadius={"full"}
               border={"4px solid black"}
               bg={"black"}
@@ -305,7 +323,7 @@ export default function Page() {
           </Flex>
           <Flex flexDir={"column"} gap={".25rem"} pl={".5rem"}>
             <Text color={"black"} fontWeight={"bold"} fontSize={"2rem"} mt={"-.25rem"}>
-              {gang?.name}
+              {gangMetadata?.name!}
             </Text>
             <ScaleFade in={gangMemberCount !== undefined}></ScaleFade>
             <Flex gap={".25rem"} align={"center"}>
@@ -369,7 +387,7 @@ export default function Page() {
                   onClick={checkin}
                   variant={"main"}
                   isDisabled={!!hasCheckedIn}
-                  isLoading={checkinAmount === undefined || process.includes(EProcess.checkingIn)}
+                  isLoading={checkinAmount === undefined || processes.includes(EProcess.checkingIn)}
                   flex={1}
                   flexDir={"column"}
                   gap={"1rem"}
@@ -476,7 +494,7 @@ export default function Page() {
                   justifyContent={"center"}
                   gap={".5rem"}
                 >
-                  {!process.includes(EProcess.inviting) && (
+                  {!processes.includes(EProcess.inviting) && (
                     <ScaleFade in>
                       <InviteIcon />
                     </ScaleFade>
@@ -485,9 +503,9 @@ export default function Page() {
                     zIndex={1}
                     lineHeight={"1rem"}
                     fontWeight={"bold"}
-                    fontSize={process.includes(EProcess.inviting) ? ".75rem" : "1rem"}
+                    fontSize={processes.includes(EProcess.inviting) ? ".75rem" : "1rem"}
                   >
-                    {process.includes(EProcess.inviting) && (
+                    {processes.includes(EProcess.inviting) && (
                       <ScaleFade in>
                         <Flex flexDir={"column"} gap={".5rem"} alignItems={"center"}>
                           <CheckCircleIcon color={"#6EFEC2"} boxSize={7}></CheckCircleIcon>
@@ -495,7 +513,7 @@ export default function Page() {
                         </Flex>
                       </ScaleFade>
                     )}
-                    {!process.includes(EProcess.inviting) && (
+                    {!processes.includes(EProcess.inviting) && (
                       <ScaleFade in>
                         <Text opacity={0.8} fontSize={".9rem"}>
                           {refAmount} REFS
@@ -626,7 +644,7 @@ export default function Page() {
                     <Text
                       lineHeight={"1rem"}
                       fontWeight={"bold"}
-                      // fontSize={process.includes(EProcess.inviting) ? ".75rem" : "1rem"}
+                      // fontSize={processes.includes(EProcess.inviting) ? ".75rem" : "1rem"}
                     >
                       Logout
                     </Text>
@@ -642,7 +660,7 @@ export default function Page() {
         isOpen={isJoinGangModalOpen}
         isCentered
         size={"sm"}
-        closeOnOverlayClick={!process.includes(EProcess.settingCurrentGang)}
+        closeOnOverlayClick={!processes.includes(EProcess.settingCurrentGang)}
       >
         <ModalOverlay bg="none" backdropFilter="auto" backdropBlur="2px" />
         <ModalContent bg={"black"}>
@@ -656,10 +674,10 @@ export default function Page() {
               bg={"white"}
               color={"black"}
               onClick={() => joinGang()}
-              isLoading={process.includes(EProcess.settingCurrentGang)}
-              isDisabled={process.includes(EProcess.hasSetCurrentGang)}
+              isLoading={processes.includes(EProcess.settingCurrentGang)}
+              isDisabled={processes.includes(EProcess.hasSetCurrentGang)}
             >
-              {process.includes(EProcess.hasSetCurrentGang) ? "Done!" : "Join"}
+              {processes.includes(EProcess.hasSetCurrentGang) ? "Done!" : "Join"}
             </Button>
             <Button
               onClick={onJoinGangModalClose}
@@ -674,5 +692,13 @@ export default function Page() {
         </ModalContent>
       </Modal>
     </Flex>
+  ) : (
+    <Spinner
+      pos={"fixed"}
+      w={"2rem"}
+      h={"2rem"}
+      top={"calc(50%  - 1rem)"}
+      left={"calc(50%  - 1rem)"}
+    ></Spinner>
   );
 }
