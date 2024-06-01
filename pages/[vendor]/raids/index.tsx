@@ -1,17 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Container, Flex, Image, Text, Button, Icon } from "@chakra-ui/react";
+import { useEffect, useRef, useState } from "react";
+import { Container, Flex, Image, Text, Button } from "@chakra-ui/react";
 import { useRouter } from "next/router";
-import { ERC20_TOKENS } from "@/const";
 import { IGang } from "@/typings";
 import { motion, AnimatePresence } from "framer-motion";
 import useArweave from "@/features/useArweave";
-import { sortBy, without } from "lodash";
+import { sortBy } from "lodash";
 import { usePrivy } from "@privy-io/react-auth";
 import useWallet from "@/features/useWallet";
 import { useAtom, useAtomValue } from "jotai";
-import { persistedGlobalScoreAtom, persistedPlayerStateAtom } from "@/state";
+import { persistedGlobalScoreAtom, persistedPlayerStateAtom, persistedStateAtom } from "@/state";
 
 export enum EStage {
   initial,
@@ -23,7 +22,7 @@ export default function Page() {
     settingCurrentGang,
   }
 
-  const [process, setProcess] = useState<EProcess[]>([]);
+  const [processes, setProcesses] = useState<EProcess[]>([]);
 
   const router = useRouter();
   const { ready, user, login, authenticated } = usePrivy();
@@ -34,28 +33,52 @@ export default function Page() {
 
   const [allGangs, setAllGangs] = useState<IGang[]>([]);
   const persistedGlobalScore = useAtomValue(persistedGlobalScoreAtom);
+  const persistedState = useAtomValue(persistedStateAtom);
   const [persistedPlayerState, setPersistedPlayerState] = useAtom(persistedPlayerStateAtom);
   const canGangIn = ready && user?.wallet?.address && authenticated && arReady;
 
+  const [gangMetadata, setGangMetadata] = useState<{
+    [gangId: string]: { name: string; ticker: string; image: string };
+  }>();
+  const gangMetadataRef = useRef(gangMetadata);
+
   useEffect(() => {
-    // @ts-ignore
-    persistedPlayerState?.currentGang &&
+    persistedPlayerState &&
       persistedGlobalScore &&
+      persistedState &&
       setAllGangs(
         sortBy(
-          ERC20_TOKENS.map((token) => ({
-            image: token.icon,
-            icon: token.icon,
-            name: token.label,
+          // @ts-ignore
+          forEach(persistedState.gangs, (gang) => ({
+            metadata: gang.metadata,
             // @ts-ignore
-            score: persistedGlobalScore[token.id] || 0,
-            id: token.id,
+            score: persistedGlobalScore[gang.id] || 0,
+            id: gang.id,
             // @ts-ignore
           })).filter(({ id }) => id !== persistedPlayerState?.currentGang),
           "score"
-        )
+        ).reverse()
       );
-  }, [persistedPlayerState, persistedGlobalScore]);
+  }, [persistedPlayerState, persistedState, persistedGlobalScore]);
+
+  useEffect(() => {
+    gangMetadataRef.current = gangMetadata;
+  }, [gangMetadata]);
+
+  useEffect(() => {
+    allGangs?.map(
+      (gang) =>
+        !gangMetadata?.[gang.id] &&
+        fetch(`${process.env.NEXT_PUBLIC_IPFS_GATEWAY}ipfs/${gang.metadata}`)
+          .then((res) => res.json())
+          .then((metadata) =>
+            setGangMetadata({
+              ...gangMetadataRef.current,
+              [gang.id]: metadata,
+            })
+          )
+    );
+  }, [allGangs]);
 
   useEffect(() => {
     ready &&
@@ -145,7 +168,7 @@ export default function Page() {
                       variant={"secondary"}
                       onClick={() => onJoinGangButtonClick(gang)}
                       isLoading={
-                        process.includes(EProcess.settingCurrentGang) || !ready || isLoading
+                        processes.includes(EProcess.settingCurrentGang) || !ready || isLoading
                       }
                     >
                       {!arReady ? "CONNECT" : "CALL OUT"}
