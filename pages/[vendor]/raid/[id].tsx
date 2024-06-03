@@ -317,6 +317,7 @@ export default function Page() {
                     }}
                     // @ts-ignore
                     src={`${process.env.NEXT_PUBLIC_IPFS_GATEWAY}ipfs/${
+                      // @ts-ignore
                       gangMetadata?.[oppositeGang.id]?.image
                     }`}
                     filter={`grayscale(${energy ? (MAX_ENERGY - energy) / MAX_ENERGY : 0})`}
