@@ -19,7 +19,6 @@ import {
 import { useRouter } from "next/router";
 import { motion, AnimatePresence } from "framer-motion";
 import useArweave from "@/features/useArweave";
-import { without } from "lodash";
 import { usePrivy } from "@privy-io/react-auth";
 import useWallet from "@/features/useWallet";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
@@ -32,13 +31,12 @@ import {
   persistedGlobalScoreAtom,
   persistedPlayerScoreAtom,
   persistedPlayerStateAtom,
+  persistedStateAtom,
 } from "@/state";
 import { TNode } from "@/features/useBubbleMap";
-import { ENERGY_RESTORE_PER_SECOND, ERC20_TOKENS, MAX_ENERGY, MAX_SCORE } from "@/const";
+import { ENERGY_RESTORE_PER_SECOND, MAX_ENERGY } from "@/const";
 import atomWithDebounce from "@/atoms/debouncedAtom";
 import { ChevronLeftIcon, HamburgerIcon } from "@chakra-ui/icons";
-import CircularRim from "@/components/icons/CircularRim";
-import TargetIcon from "@/components/icons/Target";
 
 const { debouncedValueAtom: debouncedScoreAtom, currentValueAtom: debouncedScoreAtomValue } =
   atomWithDebounce(0);
@@ -57,7 +55,7 @@ export default function Page() {
 
   const [gangsMap, setGangsMap] = useState<TNode[]>();
 
-  const [process, setProcess] = useState<EProcess[]>([]);
+  const [processes, setProcesses] = useState<EProcess[]>([]);
   const [stage, setStage] = useState<EStage>(EStage.initial);
 
   const router = useRouter();
@@ -109,7 +107,13 @@ export default function Page() {
 
   const stolenEnergy = spentEnergy * 0.15;
 
+  const [gangMetadata, setGangMetadata] = useState<{
+    [gangId: string]: { name: string; ticker: string; image: string };
+  }>();
+
   const [restoredEnergy, setRestoredEnergy] = useState(0);
+
+  const persistedState = useAtomValue(persistedStateAtom);
 
   const [scoreAnimationToggle, setScoreAnimationToggle] = useBoolean();
 
@@ -122,10 +126,12 @@ export default function Page() {
 
   useEffect(() => {
     setLocalEnergy(energy);
-
-    // @ts-ignore
-    setGangsMap(ERC20_TOKENS);
   }, []);
+
+  useEffect(() => {
+    // @ts-ignore
+    persistedState && setGangsMap(Object.values(persistedState.gangs));
+  }, [persistedState]);
 
   useEffect(() => {
     ready &&
@@ -134,6 +140,24 @@ export default function Page() {
       signFn &&
       auth(user?.wallet?.address!, signFn);
   }, [ready, user, authenticated, signFn]);
+
+  useEffect(() => {
+    oppositeGang &&
+      //@ts-ignore
+      fetch(`${process.env.NEXT_PUBLIC_IPFS_GATEWAY}ipfs/${oppositeGang.metadata}`)
+        .then((res) => res.json())
+        //@ts-ignore
+        .then((metadata) => setGangMetadata((old) => ({ ...old, [oppositeGang.id]: metadata })));
+  }, [oppositeGang]);
+
+  useEffect(() => {
+    currentGang &&
+      //@ts-ignore
+      fetch(`${process.env.NEXT_PUBLIC_IPFS_GATEWAY}ipfs/${currentGang.metadata}`)
+        .then((res) => res.json())
+        //@ts-ignore
+        .then((metadata) => setGangMetadata((old) => ({ ...old, [currentGang.id]: metadata })));
+  }, [currentGang]);
 
   useEffect(() => {
     gangsMapRef.current = gangsMap;
@@ -240,7 +264,7 @@ export default function Page() {
                   transform: `scale(${scoreAnimationToggle ? 1 : 1.1})`,
                 }}
                 // @ts-ignore
-                src={currentGang?.icon}
+                src={`${process.env.NEXT_PUBLIC_IPFS_GATEWAY}ipfs/${gangMetadata?.[currentGangId]?.image}`}
                 margin={"0 auto"}
                 width={["50%"]}
                 borderRadius={"full"}
@@ -292,7 +316,9 @@ export default function Page() {
                       transform: `scale(${scoreAnimationToggle ? 1.1 : 1})`,
                     }}
                     // @ts-ignore
-                    src={oppositeGang?.icon}
+                    src={`${process.env.NEXT_PUBLIC_IPFS_GATEWAY}ipfs/${
+                      gangMetadata?.[oppositeGang.id]?.image
+                    }`}
                     filter={`grayscale(${energy ? (MAX_ENERGY - energy) / MAX_ENERGY : 0})`}
                     margin={"0 auto"}
                     width={["80%"]}

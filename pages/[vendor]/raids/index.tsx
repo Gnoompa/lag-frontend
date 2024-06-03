@@ -6,7 +6,7 @@ import { useRouter } from "next/router";
 import { IGang } from "@/typings";
 import { motion, AnimatePresence } from "framer-motion";
 import useArweave from "@/features/useArweave";
-import { sortBy } from "lodash";
+import { forEach, sortBy } from "lodash";
 import { usePrivy } from "@privy-io/react-auth";
 import useWallet from "@/features/useWallet";
 import { useAtom, useAtomValue } from "jotai";
@@ -55,9 +55,12 @@ export default function Page() {
             score: persistedGlobalScore[gang.id] || 0,
             id: gang.id,
             // @ts-ignore
-          })).filter(({ id }) => id !== persistedPlayerState?.currentGang),
+          })),
           "score"
-        ).reverse()
+        )
+          // @ts-ignore
+          .filter(({ id }) => id !== persistedPlayerState?.currentGang)
+          .reverse()
       );
   }, [persistedPlayerState, persistedState, persistedGlobalScore]);
 
@@ -72,10 +75,10 @@ export default function Page() {
         fetch(`${process.env.NEXT_PUBLIC_IPFS_GATEWAY}ipfs/${gang.metadata}`)
           .then((res) => res.json())
           .then((metadata) =>
-            setGangMetadata({
-              ...gangMetadataRef.current,
+            setGangMetadata((old) => ({
+              ...old,
               [gang.id]: metadata,
-            })
+            }))
           )
     );
   }, [allGangs]);
@@ -151,7 +154,9 @@ export default function Page() {
                         #{gangIndex + 1}
                       </Text>
                       <Image
-                        src={gang.image}
+                        src={`${process.env.NEXT_PUBLIC_IPFS_GATEWAY}ipfs/${
+                          gangMetadata?.[gang.id]?.image
+                        }`}
                         fallback={
                           <svg width="3rem" height="3rem" viewBox="0 0 309 309" fill="none">
                             <circle cx="154.5" cy="154.5" r="154.5" fill="black" />
@@ -161,7 +166,7 @@ export default function Page() {
                         height={"3rem"}
                       ></Image>
                       <Text color={"black"} fontWeight={"bold"}>
-                        {gang.name}
+                        {gangMetadata?.[gang.id]?.name}
                       </Text>
                     </Flex>
                     <Button
