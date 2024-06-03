@@ -171,7 +171,7 @@ export default function Page() {
         ></Container>
       </Container>
       <Container mt={"20vh"} pos={"absolute"} top={0}>
-        <Flex mt={"-5rem"} ml={"50%"} transform={"translateX(-50%)"}>
+        <Flex mt={"-5rem"}>
           <ImageUploading value={tokenImage ? [tokenImage] : []} onChange={onChangeTokenImage}>
             {({
               imageList,
@@ -187,6 +187,7 @@ export default function Page() {
                 bg={isDragging ? "green" : "black"}
                 w={"10rem"}
                 h={"10rem"}
+                m={"0 auto"}
                 justify={"center"}
                 align={"center"}
                 borderRadius={"full"}

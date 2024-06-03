@@ -153,11 +153,10 @@ export default function Page() {
       (signFn
         ? setStage(
             // @ts-ignore
-            GANGS.filter(
-              ({ id }) =>
-                // @ts-ignore
-                id == persistedState.users[getArWallet(user.wallet?.address!)?.address]?.currentGang
-            )[0]
+            persistedState.gangs[
+              // @ts-ignore
+              persistedState.users[getArWallet(user.wallet?.address!)?.address]?.currentGang
+            ]
               ? EStage.game
               : EStage.gangSelection
           )
@@ -272,7 +271,7 @@ export default function Page() {
           )}
         </ScaleFade>
 
-        <Flex style={{ gap: ".5rem" }} alignItems={"flex-end"} height={"2rem"} opacity={.5}>
+        <Flex style={{ gap: ".5rem" }} alignItems={"flex-end"} height={"2rem"} opacity={0.5}>
           <Text mb={"1rem"} fontSize={".75rem"}>
             BY
           </Text>

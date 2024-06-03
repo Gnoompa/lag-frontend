@@ -76,10 +76,10 @@ export default function Page() {
         fetch(`${process.env.NEXT_PUBLIC_IPFS_GATEWAY}ipfs/${gang.metadata}`)
           .then((res) => res.json())
           .then((metadata) =>
-            setGangMetadata({
-              ...gangMetadataRef.current,
+            setGangMetadata((old) => ({
+              ...old,
               [gang.id]: metadata,
-            })
+            }))
           )
     );
   }, [allGangs]);
