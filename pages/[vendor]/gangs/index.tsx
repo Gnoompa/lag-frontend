@@ -6,7 +6,7 @@ import { useRouter } from "next/router";
 import { IGang } from "@/typings";
 import { motion, AnimatePresence } from "framer-motion";
 import useArweave from "@/features/useArweave";
-import { forEach, sortBy, without } from "lodash";
+import { sortBy, without } from "lodash";
 import { usePrivy } from "@privy-io/react-auth";
 import useWallet from "@/features/useWallet";
 import { useAtom, useAtomValue } from "jotai";
@@ -31,7 +31,7 @@ export default function Page() {
 
   const [stage, setStage] = useState<EStage>(EStage.initial);
 
-  const [allGangs, setAllGangs] = useState<IGang[]>([]);
+  const [allGangs, setAllGangs] = useState<{ metadata: string; score: string; id: string }[]>([]);
   const [gangMetadata, setGangMetadata] = useState<{
     [gangId: string]: { name: string; ticker: string; image: string };
   }>();
@@ -54,16 +54,18 @@ export default function Page() {
       setAllGangs(
         sortBy(
           // @ts-ignore
-          forEach(persistedState.gangs, (gang) => ({
-            metadata: gang.metadata,
+          Object.values(persistedState.gangs).map((gang) => ({
+            // @ts-ignore
+            ...gang,
             // @ts-ignore
             score: persistedGlobalScore[gang.id] || 0,
-            id: gang.id,
           })),
           "score"
         ).reverse()
       );
   }, [persistedState, persistedGlobalScore]);
+
+  console.log(allGangs, persistedGlobalScore);
 
   useEffect(() => {
     gangMetadataRef.current = gangMetadata;
