@@ -108,6 +108,8 @@ export default function Page() {
   // @ts-ignore
   const playerScore = persistedPlayerScore?.[gangId]?.value;
   // @ts-ignore
+  const playerLotteryScore = persistedPlayerScore?.[`lottery_${gangId}`]?.value;
+  // @ts-ignore
   const gangScore = persistedGlobalState?.score?.[gangId];
 
   const checkinTimerInterval = useRef<any>();
@@ -463,8 +465,13 @@ export default function Page() {
             <Flex gap={"1rem"}>
               <ScaleFade delay={0.3} in style={{ display: "flex", flex: 0.67 }}>
                 <Button
+                  onClick={() =>
+                    router.push({
+                      pathname: `/[vendor]/gl`,
+                      query: { vendor: router.query.vendor || "main" },
+                    })
+                  }
                   flex={1}
-                  isDisabled
                   overflow={"hidden"}
                   borderRadius={"xl"}
                   variant={"main"}
@@ -599,8 +606,12 @@ export default function Page() {
                 </Text>
               </Flex>
             )}
-            <ScaleFade in={playerScore !== undefined}>
-              <AnimatedCounter value={playerScore} color="fg" fontSize="2rem" />
+            <ScaleFade in={(playerScore || playerLotteryScore) !== undefined}>
+              <AnimatedCounter
+                value={playerScore || 0 + playerLotteryScore || 0}
+                color="fg"
+                fontSize="2rem"
+              />
             </ScaleFade>
           </Flex>
         </ScaleFade>
