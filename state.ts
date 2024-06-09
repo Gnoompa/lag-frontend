@@ -12,6 +12,9 @@ export const { debouncedValueAtom: debouncedEnergyAtom, currentValueAtom: deboun
     atomWithDebounce<number | undefined>(undefined);
 
 export const arWalletIsReadyAtom = atom<boolean>(false)
+export const isArStateInitedAtom = atom<boolean | undefined>(undefined)
+export const loggedInAtom = atom<boolean | undefined>(undefined)
+
 export const arContractStateAtom = atom<object | undefined>(undefined)
 
 export const persistedStateAtom = atom<object | undefined>(undefined)

@@ -63,9 +63,7 @@ export default function Page() {
           "score"
         ).reverse()
       );
-  }, [persistedState, persistedGlobalScore]);
-
-  console.log(allGangs, persistedGlobalScore);
+  }, [persistedState, persistedGlobalScore]);  
 
   useEffect(() => {
     gangMetadataRef.current = gangMetadata;

@@ -7,10 +7,9 @@ import { useState, PropsWithChildren, useEffect } from "react";
 import { WagmiProvider, createConfig } from "@privy-io/wagmi";
 import { mainnet, mantle } from "wagmi/chains";
 import { http } from "wagmi";
-import { Provider } from "jotai";
-import { store } from "../state";
+import { Provider, useAtom } from "jotai";
+import { loggedInAtom, store } from "../state";
 import Head from "next/head";
-import Script from "next/script";
 import { State } from "@/StateInit";
 import { AppProps } from "next/app";
 import { ChakraProvider, Spinner } from "@chakra-ui/react";
@@ -95,9 +94,11 @@ export const ComponentWrapper: React.FC<AppProps> = (props) => {
 
   const [hasLoggedIn, setHasLoggedIn] = useState<boolean>();
 
+  const [hasPasscode, setHasPasscode] = useAtom(loggedInAtom);
+
   useEffect(() => {
-    setIsValidPasscode(global.localStorage?.getItem("loginpasscode") === "lagin");
-  }, []);
+    setIsValidPasscode(global.localStorage?.getItem("loginpasscode") === "lagin" || hasPasscode);
+  }, [hasPasscode]);
 
   useEffect(() => {
     ready && setHasLoggedIn(!!(getArWallet(user?.wallet?.address!) && signFn && authenticated));

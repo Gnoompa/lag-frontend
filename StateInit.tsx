@@ -24,7 +24,7 @@ import {
   MAX_ENERGY,
 } from "./const";
 import useArweave from "@/features/useArweave";
-import { min } from "lodash";
+import { has, min } from "lodash";
 import { useAtom, useSetAtom } from "jotai";
 import { useRouter } from "next/router";
 
@@ -59,7 +59,6 @@ export function State() {
   const energyIntervalRef = useRef<any>();
 
   useEffect(() => {
-    initEpochs();
     syncArContractState();
   }, [arWallet]);
 

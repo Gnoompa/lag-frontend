@@ -16,8 +16,8 @@ import { ERC20_TOKENS, GANGS, VENDOR_CONFIG } from "@/const";
 import { useRouter } from "next/router";
 import useArweave from "@/features/useArweave";
 import { useLogin, usePrivy } from "@privy-io/react-auth";
-import { useAtomValue } from "jotai";
-import { persistedPlayerStateAtom, persistedStateAtom } from "@/state";
+import { useAtom, useAtomValue } from "jotai";
+import { loggedInAtom, persistedPlayerStateAtom, persistedStateAtom } from "@/state";
 import useWallet from "@/features/useWallet";
 
 export enum EStage {
@@ -44,7 +44,7 @@ export default function Page() {
   const persistedPlayerState = useAtomValue(persistedPlayerStateAtom);
 
   const [stage, setStage] = useState<EStage>();
-  const [loggedIn, setLoggedIn] = useState<boolean>();
+  const [loggedIn, setLoggedIn] = useAtom(loggedInAtom);
   const [passphase, setPassphase] = useState<string>();
 
   const shortAddress = `${user?.wallet?.address?.substring(
@@ -53,37 +53,6 @@ export default function Page() {
   )}..${user?.wallet?.address?.substring(6, 10)}`;
 
   const isReady = !!persistedState;
-
-  const bubbleMapItems = useMemo(
-    () => [
-      ...ERC20_TOKENS,
-      {
-        label: "",
-        id: 1,
-        image: "/banner1.svg",
-        value: 200,
-      },
-      {
-        label: "",
-        id: 2,
-        image: "/banner2.svg",
-        value: 125,
-      },
-      {
-        label: "",
-        id: 3,
-        image: "/banner3.svg",
-        value: 150,
-      },
-      {
-        label: "",
-        id: 4,
-        image: "/banner4.svg",
-        value: 175,
-      },
-    ],
-    []
-  );
 
   // const { render: renderBubblemap, unmount: removeBubblemap } = useBubbleMap(bubbleMapItems, {
   //   height: global.innerHeight * 0.7,
@@ -110,26 +79,18 @@ export default function Page() {
   useEffect(() => {
     stage === EStage.gangSelection &&
       arReady &&
-      setTimeout(
-        () =>
-          router.push({
-            pathname: "/[vendor]/gangs",
-            query: { vendor: router.query.vendor || "main" },
-          }),
-        500
-      );
+      setTimeout(() => router.push(`/${router.query.vendor || "main"}/gangs`), 500);
 
     persistedState &&
       stage === EStage.game &&
       setTimeout(
         () =>
-          router.push({
-            pathname: `/[vendor]/gang/${
+          router.push(
+            `/${router.query.vendor || "main"}/gang/${
               // @ts-ignore
               persistedState.users[getArWallet(user.wallet?.address!)?.address].currentGang
-            }`,
-            query: { vendor: router.query.vendor || "main" },
-          }),
+            }`
+          ),
         500
       );
   }, [user, stage, persistedState, router, arReady]);
