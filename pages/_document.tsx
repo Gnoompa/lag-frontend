@@ -16,7 +16,7 @@ export default function Document() {
         <Script strategy="beforeInteractive" src="/vendor" referrerPolicy="same-origin"></Script>
         <Script
           strategy="beforeInteractive"
-          src="https://telegram.org/js/telegram-web-app.js"
+          src="/tg.js"
         ></Script>
         <Main />
         <NextScript />

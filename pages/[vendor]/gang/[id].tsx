@@ -167,9 +167,9 @@ export default function Page() {
     persistedPlayerState &&
       gangId &&
       // @ts-ignore
-      (setCheckinAmount(persistedPlayerState.checkin[gangId]?.value || 0),
+      (setCheckinAmount(persistedPlayerState.checkin?.[gangId]?.value || 0),
       // @ts-ignore
-      setLastCheckin(persistedPlayerState.checkin[gangId]?.lastTimestamp));
+      setLastCheckin(persistedPlayerState.checkin?.[gangId]?.lastTimestamp));
   }, [persistedPlayerState, gangId]);
 
   const invite = () => {
