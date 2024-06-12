@@ -16,7 +16,7 @@ import { ChakraProvider, Spinner } from "@chakra-ui/react";
 import { theme } from "../theme";
 import { useRouter } from "next/router";
 import Page from ".";
-import useWallet from "@/features/useWallet";
+import useWallet from "@/features/useAccount";
 import useArweave from "@/features/useArweave";
 
 export default function Providers(props: AppProps) {

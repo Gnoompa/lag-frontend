@@ -16,7 +16,7 @@ import {
 import { useRouter } from "next/router";
 import useArweave from "@/features/useArweave";
 import { usePrivy } from "@privy-io/react-auth";
-import useWallet from "@/features/useWallet";
+import useWallet from "@/features/useAccount";
 import ImageUploading, { ImageType } from "react-images-uploading";
 import { CloseIcon } from "@chakra-ui/icons";
 import { last, omit } from "lodash";

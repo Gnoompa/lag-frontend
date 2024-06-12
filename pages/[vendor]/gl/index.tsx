@@ -5,7 +5,7 @@ import { Button, Flex, IconButton, ScaleFade, Text, useDisclosure } from "@chakr
 import { useRouter } from "next/router";
 import useArweave from "@/features/useArweave";
 import { usePrivy } from "@privy-io/react-auth";
-import useWallet from "@/features/useWallet";
+import useWallet from "@/features/useAccount";
 import { useAtom } from "jotai";
 import { arContractStateAtom, persistedPlayerStateAtom } from "@/state";
 import { TNode } from "@/features/useBubbleMap";

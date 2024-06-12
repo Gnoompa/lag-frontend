@@ -18,7 +18,7 @@ import useArweave from "@/features/useArweave";
 import { useLogin, usePrivy } from "@privy-io/react-auth";
 import { useAtom, useAtomValue } from "jotai";
 import { loggedInAtom, persistedPlayerStateAtom, persistedStateAtom } from "@/state";
-import useWallet from "@/features/useWallet";
+import useWallet from "@/features/useAccount";
 
 export enum EStage {
   initial,
