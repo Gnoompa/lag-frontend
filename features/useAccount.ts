@@ -3,15 +3,17 @@
 import { Wallet, usePrivy } from "@privy-io/react-auth";
 import { useEffect } from "react";
 import useTelegram from "./useTelegram";
-import { Account } from "viem";
-import { atom, useAtom } from "jotai";
+import { Account, Address } from "viem";
+import { atom, useAtom, useAtomValue } from "jotai";
+import { walletAddressAtom as arweaveWalletAddressAtom } from "./useArweave";
 
 export type TAccount = {
-  wallet: Wallet | Account;
-  sign: (msg: string) => Promise<string>;
+  evmWallet?: Wallet | Account;
+  arweaveAddress?: Address;
+  sign?: (msg: string) => Promise<string>;
 };
 
-const accountAtom = atom<TAccount | undefined>(undefined);
+export const accountAtom = atom<TAccount | undefined>(undefined);
 
 export default function useAccount() {
   const {
@@ -30,6 +32,7 @@ export default function useAccount() {
   } = usePrivy();
 
   const [account, setAccount] = useAtom(accountAtom);
+  const arweaveWalletAddress = useAtomValue(arweaveWalletAddressAtom);
 
   const ready = privyReady && (inTelegram ? telegramReady : true);
   const authenticated = inTelegram ? true : privyAuthenticated;
@@ -41,9 +44,9 @@ export default function useAccount() {
   useEffect(() => {
     inTelegram &&
       telegramReady &&
-      telegramCloudWallet &&      
+      telegramCloudWallet &&
       setAccount({
-        wallet: telegramCloudWallet,
+        evmWallet: telegramCloudWallet,
         sign: (message) => telegramCloudWallet.signMessage({ message }),
       });
 
@@ -52,10 +55,18 @@ export default function useAccount() {
       privyUser &&
       privyAuthenticated &&
       setAccount({
-        wallet: privyUser.wallet as Wallet,
+        evmWallet: privyUser.wallet as Wallet,
         sign: privySignMessage,
       });
-  }, [account, inTelegram, telegramReady, telegramCloudWallet, privyReady, privyUser, privyAuthenticated]);
+  }, [
+    account,
+    inTelegram,
+    telegramReady,
+    telegramCloudWallet,
+    privyReady,
+    privyUser,
+    privyAuthenticated,
+  ]);
 
   const login = async () =>
     inTelegram
