@@ -4,8 +4,7 @@ import { Wallet, usePrivy } from "@privy-io/react-auth";
 import { useEffect } from "react";
 import useTelegram from "./useTelegram";
 import { Account, Address } from "viem";
-import { atom, useAtom, useAtomValue } from "jotai";
-import { walletAddressAtom as arweaveWalletAddressAtom } from "./useArweave";
+import { atom, useAtom } from "jotai";
 
 export type TAccount = {
   evmWallet?: Wallet | Account;
@@ -32,46 +31,39 @@ export default function useAccount() {
   } = usePrivy();
 
   const [account, setAccount] = useAtom(accountAtom);
-  const arweaveWalletAddress = useAtomValue(arweaveWalletAddressAtom);
 
   const ready = privyReady && (inTelegram ? telegramReady : true);
   const authenticated = inTelegram ? true : privyAuthenticated;
 
   useEffect(() => {
-    inTelegram;
-  }, [inTelegram]);
-
-  useEffect(() => {
     inTelegram &&
       telegramReady &&
-      telegramCloudWallet &&
-      setAccount({
-        evmWallet: telegramCloudWallet,
-        sign: (message) => telegramCloudWallet.signMessage({ message }),
-      });
+      !account &&
+      setAccount(
+        telegramCloudWallet
+          ? {
+              evmWallet: telegramCloudWallet,
+              sign: (message) => telegramCloudWallet.signMessage({ message }),
+            }
+          : undefined
+      );
+  }, [account, inTelegram, telegramReady, telegramCloudWallet]);
 
-    inTelegram === false &&
-      privyReady &&
+  useEffect(() => {
+    privyReady &&
       privyUser &&
-      privyAuthenticated &&
-      setAccount({
-        evmWallet: privyUser.wallet as Wallet,
-        sign: privySignMessage,
-      });
-  }, [
-    account,
-    inTelegram,
-    telegramReady,
-    telegramCloudWallet,
-    privyReady,
-    privyUser,
-    privyAuthenticated,
-  ]);
+      setAccount(
+        privyUser
+          ? {
+              evmWallet: privyUser.wallet as Wallet,
+              sign: privySignMessage,
+            }
+          : undefined
+      );
+  }, [privyReady, privyUser]);
 
-  const login = async () =>
-    inTelegram
-      ? telegramReady && generateTelegramCloudWallet(Promise.reject)
-      : privyReady && privyLogin();
+  const login = () =>
+    inTelegram ? true : privyReady && !authenticated ? (privyLogin(), false) : true;
 
   return {
     ready,

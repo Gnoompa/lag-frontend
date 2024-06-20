@@ -2,6 +2,11 @@
 const nextConfig = {
     // swcMinify: false,
     reactStrictMode: true,
+    // webpack: (config, { buildId, dev }) => {
+    //     config.resolve.symlinks = false
+    //     return config
+    // },
+    transpilePackages: ['lag-types/*']
 };
 
 export default nextConfig;

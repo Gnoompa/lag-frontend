@@ -1,36 +1,19 @@
-"use client";
-
 import "./globals.css";
-import { PrivyProvider, usePrivy } from "@privy-io/react-auth";
+import { PrivyProvider } from "@privy-io/react-auth";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState, PropsWithChildren, useEffect } from "react";
 import { WagmiProvider, createConfig } from "@privy-io/wagmi";
 import { mainnet, mantle } from "wagmi/chains";
 import { http } from "wagmi";
-import { Provider, useAtom } from "jotai";
-import { loggedInAtom, store } from "../state";
+import { Provider as JotaiProvider } from "jotai";
+import { store } from "../state";
 import Head from "next/head";
-import { State } from "@/StateInit";
 import { AppProps } from "next/app";
-import { ChakraProvider, Spinner } from "@chakra-ui/react";
+import { ChakraProvider } from "@chakra-ui/react";
 import { theme } from "../theme";
-import { useRouter } from "next/router";
-import Page from ".";
-import useWallet from "@/features/useAccount";
-import useArweave from "@/features/useArweave";
+import Layout from "@/components/Layout";
 
-export default function Providers(props: AppProps) {
-  const router = useRouter();
-
-  const { Component, pageProps } = props;
-
-  const [queryClient] = useState(() => new QueryClient());
-
-  const [hasMounted, setHasMounted] = useState(false);
-
-  useEffect(() => {
-    setHasMounted(true);
-  }, []);
+export default function Page(props: AppProps) {
+  const queryClient = new QueryClient();
 
   const config = createConfig({
     chains: [mainnet, mantle],
@@ -40,23 +23,20 @@ export default function Providers(props: AppProps) {
     },
   });
 
-  return !hasMounted ? (
-    <></>
-  ) : (
+  return (
     <>
       <Head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="color-scheme" content="light dark" />
         <meta name="theme-color" content="#0E1111" />
-        <title>DoubleTap</title>
+        <title>LAG</title>
       </Head>
       <PrivyProvider
-        appId="cltsh2wbj0161vzdwrozpkglu"
+        appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID || ''}
         config={{
           supportedChains: [mainnet],
           defaultChain: mainnet,
-          // @ts-ignore
-          loginMethods: ["twitter", "farcaster", ...(global.Telegram?.WebApp.initData ? [] : ["wallet"])],
+          loginMethods: ["email", "wallet"],
           appearance: {
             theme: "#0E1111",
           },
@@ -64,61 +44,14 @@ export default function Providers(props: AppProps) {
       >
         <QueryClientProvider client={queryClient}>
           <WagmiProvider config={config}>
-            <Provider store={store}>
-              <ArweaveProvider>
-                <ChakraProvider theme={theme}>
-                  <ComponentWrapper {...props} />
-                </ChakraProvider>
-                <State />
-              </ArweaveProvider>
-            </Provider>
+            <JotaiProvider store={store}>
+              <ChakraProvider theme={theme}>
+                <Layout {...props} />
+              </ChakraProvider>
+            </JotaiProvider>
           </WagmiProvider>
         </QueryClientProvider>
       </PrivyProvider>
     </>
   );
 }
-
-export const ArweaveProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  //   const { user } = usePrivy();
-
-  return <>{children}</>;
-};
-
-export const ComponentWrapper: React.FC<AppProps> = (props) => {
-  const [isValidPasscode, setIsValidPasscode] = useState<boolean>();
-
-  const { ready, user, login, authenticated } = usePrivy();
-  const { signFn } = useWallet();
-  const { write, ready: arReady, auth, isLoading, getArWallet } = useArweave(user?.wallet?.address);
-
-  const [hasLoggedIn, setHasLoggedIn] = useState<boolean>();
-
-  const [hasPasscode, setHasPasscode] = useAtom(loggedInAtom);
-
-  useEffect(() => {
-    setIsValidPasscode(global.localStorage?.getItem("loginpasscode") === "lagin" || hasPasscode);
-  }, [hasPasscode]);
-
-  useEffect(() => {
-    ready && setHasLoggedIn(!!(getArWallet(user?.wallet?.address!) && signFn && authenticated));
-  }, [ready, authenticated, user, signFn]);
-
-  return isValidPasscode ? (
-    hasLoggedIn === undefined ? (
-      <Spinner
-        pos={"fixed"}
-        w={"2rem"}
-        h={"2rem"}
-        top={"calc(50%  - 1rem)"}
-        left={"calc(50%  - 1rem)"}
-      ></Spinner>
-    ) : hasLoggedIn ? (
-      <props.Component {...props.pageProps} />
-    ) : (
-      <Page />
-    )
-  ) : (
-    <Page />
-  );
-};

@@ -39,7 +39,7 @@ export const theme = extendTheme({
                     bg: "white",
                     color: "black",
                     fontWeight: "bold",
-                    border: "1px solid black",
+                    border: "2px solid black",
                     boxShadow: "0px 4px 0px white",
                     _active: {
                         boxShadow: "0px 0px 0px white",

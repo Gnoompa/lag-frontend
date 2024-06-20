@@ -1,15 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import {
   Box,
   Button,
   Container,
   Flex,
   Image,
-  Menu,
-  MenuButton,
-  MenuList,
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -21,105 +17,37 @@ import {
   Text,
   useDisclosure,
 } from "@chakra-ui/react";
-import { useRouter } from "next/router";
-import { IGang } from "@/typings";
-import useArweave from "@/features/useArweave";
-import { usePrivy } from "@privy-io/react-auth";
-import useWallet from "@/features/useAccount";
-import { useAtom, useAtomValue } from "jotai";
-import {
-  persistedGlobalStateAtom,
-  persistedPlayerScoreAtom,
-  persistedPlayerStateAtom,
-  persistedStateAtom,
-} from "@/state";
-import { GANG_LEVEL_STEP, GANGS } from "@/const";
+import useRouter, { ERouterPaths } from "@/features/useRouter";
 import UserCount from "@/components/icons/UserCount";
-import { CheckCircleIcon, ChevronLeftIcon, HamburgerIcon } from "@chakra-ui/icons";
-import { without } from "lodash";
+import { CheckCircleIcon, ChevronLeftIcon } from "@chakra-ui/icons";
 import TargetIcon from "@/components/icons/Target";
 import InviteIcon from "@/components/icons/Invite";
-import { useSpring } from "framer-motion";
 import RewardIcon from "@/components/icons/Reward";
 import { AnimatedCounter } from "@/components/Counter";
-import { useReadContract } from "wagmi";
-import { Address, formatEther, parseAbi } from "viem";
-import WalletIcon from "@/components/icons/Wallet";
-
-export enum EStage {
-  initial,
-}
+import useCheckin from "@/features/useCheckin";
+import useUser from "@/features/useUser";
+import useGangs from "@/features/useGangs";
+import useInvite from "@/features/useInvite";
 
 export default function Page() {
-  enum EProcess {
-    inviting,
-    settingCurrentGang,
-    hasSetCurrentGang,
-    checkingIn,
-  }
-
-  const [processes, setProcesses] = useState<EProcess[]>([]);
-  const [stage, setStage] = useState<EStage>(EStage.initial);
-
-  const [lastCheckin, setLastCheckin] = useState<number>();
-
-  const [checkinAmount, setCheckinAmount] = useState<number>();
-  const [hasCheckedIn, setHasCheckedIn] = useState<Boolean>();
-  const [nextCheckinTime, setNextCheckinTime] = useState<string>();
-
-  const router = useRouter();
-  const { ready, user, login, authenticated, logout } = usePrivy();
-  const { signFn } = useWallet();
-  const { write, ready: arReady, auth, isLoading, arWallet } = useArweave(user?.wallet?.address);
-
-  const [gang, setGang] = useState<IGang>();
-  const [gangMetadata, setGangMetadata] = useState<{
-    name: string;
-    image: string;
-    ticker: string;
-  }>();
-  const persistedState = useAtomValue(persistedStateAtom);
-  const [persistedPlayerState, setPersistedPlayerState] = useAtom(persistedPlayerStateAtom);
-  const persistedPlayerScore = useAtomValue(persistedPlayerScoreAtom);
-  const persistedGlobalState = useAtomValue(persistedGlobalStateAtom);
-  // @ts-ignore
-  const currentGangId = persistedPlayerState?.currentGang;
-  // @ts-ignore
-  const checkins = persistedPlayerState?.checkin;
-  const canGangIn = ready && user?.wallet?.address && authenticated && arReady;
-  // @ts-ignore
-  const refAmount = persistedPlayerState?.invitees?.length || 0;
+  const { router, push: routerPush } = useRouter();
 
   const gangId = router.query.id as string;
 
   const {
-    data: gangTokenBalance,
-    error,
-    status,
-  } = useReadContract({
-    //@ts-ignore
-    address: GANGS.filter(({ id }) => id == gangId)[0]?.address,
-    abi: parseAbi(["function balanceOf(address owner) view returns (uint256)"]),
-    functionName: "balanceOf",
-    args: [user?.wallet?.address as Address],
-    chainId: 5000,
-  });
-
-  // @ts-ignore
-  const playerScore = persistedPlayerScore?.[gangId]?.value;
-  // @ts-ignore
-  const playerLotteryScore = persistedPlayerScore?.[`lottery_${gangId}`]?.value;
-  // @ts-ignore
-  const gangScore = persistedGlobalState?.score?.[gangId];
-
-  const checkinTimerInterval = useRef<any>();
-
-  const gangMemberCount = persistedGlobalState
-    ? // @ts-ignore
-      persistedGlobalState?.gangMemberCount?.[gangId] || 0
-    : undefined;
-
-  const gangScoreProgress = useSpring(0);
+    ready,
+    login,
+    authenticated,
+    currentUser,
+    currentUserScore,
+    setGang: setUserGang,
+    isWriting: isWritingUser,
+  } = useUser();
+  const { checkin, currentCheckin } = useCheckin({ gangIds: [gangId] });
+  const { copyInviteLink, hasCopiedInviteLink } = useInvite();
+  const { gangMetadata, getGangImageUrl, gangs } = useGangs({ gangIds: [gangId] });
+  const currentGang = gangs?.[gangId];
+  const currentGangMetadata = currentGang && gangMetadata?.[currentGang.id];
 
   const {
     isOpen: isJoinGangModalOpen,
@@ -127,124 +55,14 @@ export default function Page() {
     onClose: onJoinGangModalClose,
   } = useDisclosure();
 
-  useEffect(() => {
-    gangScore && gangScoreProgress.set(((gangScore % GANG_LEVEL_STEP) / GANG_LEVEL_STEP) * 100);
-  }, [gangScore]);
+  const onRaidButtonClick = () => login() && routerPush(ERouterPaths.RAID_OPPONENT_SELECTION);
 
-  useEffect(() => {
-    // @ts-ignore
-    persistedState?.gangs?.[router.query.id] &&
-      // @ts-ignore
-      setGang(
-        // @ts-ignore
-        persistedState.gangs[router.query.id]
-      );
-  }, [router, persistedState]);
+  const onJoinGangButtonClick = () =>
+    currentGang?.id === gangId ? joinGang() : onJoinGangModalOpen();
 
-  useEffect(() => {
-    gang &&
-      // @ts-ignore
-      fetch(`${process.env.NEXT_PUBLIC_IPFS_GATEWAY}ipfs/${gang.metadata}`)
-        .then((res) => res.json())
-        .then(setGangMetadata);
-  }, [gang]);
+  const joinGang = () => setUserGang(gangId);
 
-  useEffect(() => {
-    clearInterval(checkinTimerInterval.current);
-
-    lastCheckin ? initCheckin() : setHasCheckedIn(false);
-  }, [lastCheckin]);
-
-  useEffect(() => {
-    ready &&
-      user?.wallet?.address &&
-      authenticated &&
-      signFn &&
-      auth(user?.wallet?.address!, signFn);
-  }, [ready, user, authenticated, signFn]);
-
-  useEffect(() => {
-    persistedPlayerState &&
-      gangId &&
-      // @ts-ignore
-      (setCheckinAmount(persistedPlayerState.checkin?.[gangId]?.value || 0),
-      // @ts-ignore
-      setLastCheckin(persistedPlayerState.checkin?.[gangId]?.lastTimestamp));
-  }, [persistedPlayerState, gangId]);
-
-  const invite = () => {
-    setProcesses([...processes, EProcess.inviting]);
-
-    setTimeout(() => setProcesses(without(processes, EProcess.inviting)), 2000);
-
-    navigator.clipboard.writeText(`${location.origin}/?i=${arWallet?.address}`);
-  };
-
-  const onRaidButtonClick = () =>
-    currentGangId === gangId
-      ? router.push({
-          pathname: `/[vendor]/raids`,
-          query: { vendor: router.query.vendor || "main" },
-        })
-      : onJoinGangModalOpen();
-
-  const joinGang = () => {
-    write({ function: "gang", gang: gangId })
-      .then(
-        () => (
-          setPersistedPlayerState({ ...persistedPlayerState, currentGang: gangId }),
-          setProcesses([...processes, EProcess.settingCurrentGang])
-        )
-      )
-      .catch(() => alert("Oops, smth went wrong..."))
-      .finally(
-        () => (
-          setProcesses([...processes, EProcess.hasSetCurrentGang]),
-          setTimeout(
-            () => (
-              setProcesses(without(processes, EProcess.settingCurrentGang)),
-              setProcesses(without(processes, EProcess.hasSetCurrentGang)),
-              onJoinGangModalClose()
-            ),
-            1000
-          )
-        )
-      );
-  };
-
-  const initCheckin = () => {
-    setHasCheckedIn(lastCheckin ? Date.now() - lastCheckin < 12 * 60 * 60 * 1000 - 1 : false);
-
-    checkinTimerInterval.current = setInterval(
-      () => (
-        setHasCheckedIn(lastCheckin ? Date.now() - lastCheckin < 12 * 60 * 60 * 1000 - 1 : false),
-        setNextCheckinTime(
-          lastCheckin
-            ? ((date): string =>
-                // @ts-ignore
-                [~~(date / 60), ~~date].reduce(
-                  (a, b, i) =>
-                    // @ts-ignore
-                    +a ? `${a}${["h", "m", "s"][i]}` : i == 1 && !a ? `${b}s` : i == 0 ? b : a,
-                  ~~(date / (60 * 60 * 1000))
-                ))(12 * 60 * 60 * 1000 - (+Date.now() - lastCheckin))
-            : undefined
-        )
-      ),
-      1000
-    );
-  };
-
-  const checkin = () => {
-    setProcesses([...processes, EProcess.checkingIn]);
-
-    write({ function: "checkin", gangId: currentGangId })
-      .then(() => (setLastCheckin(+Date.now()), setCheckinAmount(checkinAmount! + 1)))
-      .catch(() => alert("Oops, smth went wrong..."))
-      .finally(() => setProcesses(without(processes, EProcess.checkingIn)));
-  };
-
-  return gangMetadata ? (
+  return currentGang && currentGangMetadata ? (
     <Flex width={"100%"} flexDirection={"column"} alignItems={"center"} padding={"1rem"}>
       <Container
         h={"20vh"}
@@ -258,12 +76,7 @@ export default function Page() {
         borderRadius={"0 0 30px 30px"}
       >
         <Button
-          onClick={() =>
-            router.push({
-              pathname: `/[vendor]/gangs`,
-              query: { vendor: router.query.vendor || "main" },
-            })
-          }
+          onClick={() => routerPush(ERouterPaths.GANGS)}
           pos={"fixed"}
           variant={"unstyled"}
           top={"1rem"}
@@ -286,8 +99,7 @@ export default function Page() {
           borderRadius={"0 0 30px 30px"}
         >
           <Image
-            // @ts-ignore
-            src={`${process.env.NEXT_PUBLIC_IPFS_GATEWAY}ipfs/${gangMetadata.image}`}
+            src={getGangImageUrl(currentGangMetadata)}
             w={"150vw"}
             pos={"absolute"}
             top={0}
@@ -315,7 +127,7 @@ export default function Page() {
           <Flex flexDir={"column"} gap={".25rem"} alignItems={"center"}>
             <Image
               //@ts-ignore
-              src={`${process.env.NEXT_PUBLIC_IPFS_GATEWAY}ipfs/${gangMetadata.image}`}
+              src={getGangImageUrl(currentGangMetadata)}
               w={"5rem"}
               h={"5rem"}
               borderRadius={"full"}
@@ -325,16 +137,12 @@ export default function Page() {
           </Flex>
           <Flex flexDir={"column"} gap={".25rem"} pl={".5rem"}>
             <Text color={"black"} fontWeight={"bold"} fontSize={"2rem"} mt={"-.25rem"}>
-              {gangMetadata?.name!}
+              {currentGangMetadata.name}
             </Text>
-            <ScaleFade in={gangMemberCount !== undefined}></ScaleFade>
             <Flex gap={".25rem"} align={"center"}>
               <UserCount />
-              <Text fontWeight={"bold"}>{gangMemberCount}</Text>
+              <Text fontWeight={"bold"}>{currentGang.members.length}</Text>
             </Flex>
-            {/* <Text color={"white"} fontStyle={"italic"} opacity={0.8}>
-              short desc
-            </Text> */}
           </Flex>
         </Flex>
       </Container>
@@ -381,21 +189,21 @@ export default function Page() {
             </Flex>
           </Flex>
         </Flex> */}
-        {currentGangId === gangId ? (
+        {currentGang.id === gangId ? (
           <Flex flexDir={"column"} gap={"1rem"}>
             <Flex gap={"1rem"}>
               <ScaleFade delay={0.1} in style={{ display: "flex", flex: 0.33 }}>
                 <Button
                   onClick={checkin}
                   variant={"main"}
-                  isDisabled={!!hasCheckedIn}
-                  isLoading={checkinAmount === undefined || processes.includes(EProcess.checkingIn)}
+                  isDisabled={currentCheckin?.isCheckingIn}
+                  isLoading={!currentCheckin || currentCheckin?.isCheckingIn}
                   flex={1}
                   flexDir={"column"}
                   gap={"1rem"}
                 >
                   <ScaleFade
-                    in={!!checkinAmount}
+                    in={!!currentCheckin?.checkinAmount}
                     style={{ position: "absolute", top: "-.5rem", left: "-.5rem" }}
                   >
                     <Flex
@@ -409,13 +217,13 @@ export default function Page() {
                       justify={"center"}
                     >
                       <Text color={"black"} fontSize={".75rem"}>
-                        {checkinAmount}
+                        {currentCheckin?.checkinAmount}
                       </Text>
                     </Flex>
                   </ScaleFade>
                   <Flex flexDir={"column"} align={"center"} gap={".5rem"}>
                     <Text>CHECK IN</Text>
-                    {checkinAmount !== undefined && checkinAmount == 0 && (
+                    {currentCheckin?.checkinAmount == 0 && (
                       <ScaleFade in>
                         <Flex gap={".25rem"} align={"baseline"}>
                           <Text color="accent">3X</Text>
@@ -425,10 +233,10 @@ export default function Page() {
                         </Flex>
                       </ScaleFade>
                     )}
-                    {hasCheckedIn && !!nextCheckinTime && (
+                    {currentCheckin?.hasCheckedIn && !!currentCheckin?.nextCheckinTime && (
                       <ScaleFade in>
                         <Text fontSize={".9rem"} color={"whiteAlpha.500"}>
-                          in {nextCheckinTime}
+                          in {currentCheckin?.nextCheckinTime}
                         </Text>
                       </ScaleFade>
                     )}
@@ -465,12 +273,7 @@ export default function Page() {
             <Flex gap={"1rem"}>
               <ScaleFade delay={0.3} in style={{ display: "flex", flex: 0.67 }}>
                 <Button
-                  onClick={() =>
-                    router.push({
-                      pathname: `/[vendor]/gl`,
-                      query: { vendor: router.query.vendor || "main" },
-                    })
-                  }
+                  onClick={() => routerPush(ERouterPaths.LOTTERY)}
                   flex={1}
                   overflow={"hidden"}
                   borderRadius={"xl"}
@@ -490,7 +293,7 @@ export default function Page() {
               </ScaleFade>
               <ScaleFade delay={0.4} in style={{ display: "flex", flex: 0.33 }}>
                 <Button
-                  onClick={invite}
+                  onClick={() => copyInviteLink(currentGang.id)}
                   flex={1}
                   borderRadius={"xl"}
                   overflow={"hidden"}
@@ -501,7 +304,7 @@ export default function Page() {
                   justifyContent={"center"}
                   gap={".5rem"}
                 >
-                  {!processes.includes(EProcess.inviting) && (
+                  {hasCopiedInviteLink && (
                     <ScaleFade in>
                       <InviteIcon />
                     </ScaleFade>
@@ -510,9 +313,9 @@ export default function Page() {
                     zIndex={1}
                     lineHeight={"1rem"}
                     fontWeight={"bold"}
-                    fontSize={processes.includes(EProcess.inviting) ? ".75rem" : "1rem"}
+                    fontSize={hasCopiedInviteLink ? ".75rem" : "1rem"}
                   >
-                    {processes.includes(EProcess.inviting) && (
+                    {hasCopiedInviteLink && (
                       <ScaleFade in>
                         <Flex flexDir={"column"} gap={".5rem"} alignItems={"center"}>
                           <CheckCircleIcon color={"#6EFEC2"} boxSize={7}></CheckCircleIcon>
@@ -520,20 +323,26 @@ export default function Page() {
                         </Flex>
                       </ScaleFade>
                     )}
-                    {!processes.includes(EProcess.inviting) && (
+                    {/* {!hasCopiedInviteLink && (
                       <ScaleFade in>
                         <Text opacity={0.8} fontSize={".9rem"}>
                           {refAmount} REFS
                         </Text>
                       </ScaleFade>
-                    )}
+                    )} */}
                   </Text>
                 </Button>
               </ScaleFade>
             </Flex>
           </Flex>
         ) : (
-          <Button onClick={joinGang} variant={"accent"} size={"lg"} px={"5rem"} zIndex={"99999"}>
+          <Button
+            onClick={onJoinGangButtonClick}
+            variant={"accent"}
+            size={"lg"}
+            px={"5rem"}
+            zIndex={"99999"}
+          >
             GANG IN
           </Button>
         )}
@@ -550,7 +359,7 @@ export default function Page() {
         pos={"fixed"}
         bottom={"1rem"}
       >
-        <ScaleFade in>
+        {/* <ScaleFade in>
           <Button
             isDisabled={currentGangId == router.query.id}
             isLoading={!currentGangId}
@@ -576,7 +385,7 @@ export default function Page() {
               w={"2rem"}
             ></Image>
           </Button>
-        </ScaleFade>
+        </ScaleFade> */}
         {/* <CircularProgress
           value={gangScoreProgress.get()}
           bg={"#ffffff0f"}
@@ -598,25 +407,21 @@ export default function Page() {
         </CircularProgress> */}
         <ScaleFade in>
           <Flex flexDir={"column"} gap={".5rem"} justify={"center"} align={"center"}>
-            {!!gangTokenBalance && (
+            {/* {!!gangTokenBalance && (
               <Flex gap={".5rem"} align={"center"} justify={"center"}>
                 <WalletIcon></WalletIcon>
                 <Text fontWeight={"bold"} fontSize={"1.25rem"}>
                   {(+formatEther(gangTokenBalance)).toFixed(2)}
                 </Text>
               </Flex>
-            )}
-            <ScaleFade in={(playerScore || playerLotteryScore) !== undefined}>
-              <AnimatedCounter
-                value={playerScore || 0 + playerLotteryScore || 0}
-                color="fg"
-                fontSize="2rem"
-              />
+            )} */}
+            <ScaleFade in={!!currentUserScore}>
+              <AnimatedCounter value={currentUserScore || 0} color="fg" fontSize="2rem" />
             </ScaleFade>
           </Flex>
         </ScaleFade>
 
-        <ScaleFade in>
+        {/* <ScaleFade in>
           <Menu>
             <MenuButton
               p={".5rem"}
@@ -664,15 +469,9 @@ export default function Page() {
               </Flex>
             </MenuList>
           </Menu>
-        </ScaleFade>
+        </ScaleFade> */}
       </Flex>
-      <Modal
-        onClose={onJoinGangModalClose}
-        isOpen={isJoinGangModalOpen}
-        isCentered
-        size={"sm"}
-        closeOnOverlayClick={!processes.includes(EProcess.settingCurrentGang)}
-      >
+      <Modal onClose={onJoinGangModalClose} isOpen={isJoinGangModalOpen} isCentered size={"sm"}>
         <ModalOverlay bg="none" backdropFilter="auto" backdropBlur="2px" />
         <ModalContent bg={"black"}>
           <ModalCloseButton />
@@ -681,22 +480,8 @@ export default function Page() {
             <Text>Penalty for leaving your current gang is 15%</Text>
           </ModalBody>
           <ModalFooter justifyContent={"space-around"}>
-            <Button
-              bg={"white"}
-              color={"black"}
-              onClick={() => joinGang()}
-              isLoading={processes.includes(EProcess.settingCurrentGang)}
-              isDisabled={processes.includes(EProcess.hasSetCurrentGang)}
-            >
-              {processes.includes(EProcess.hasSetCurrentGang) ? "Done!" : "Join"}
-            </Button>
-            <Button
-              onClick={onJoinGangModalClose}
-              // isLoading={process.includes(EProcess.settingCurrentGang)}
-              // isDisabled={process.includes(EProcess.hasSetCurrentGang)}
-              isLoading={false}
-              isDisabled={true}
-            >
+            <Button bg={"white"} color={"black"} onClick={joinGang}></Button>
+            <Button onClick={onJoinGangModalClose} isLoading={false} isDisabled={true}>
               Nah
             </Button>
           </ModalFooter>
@@ -713,3 +498,23 @@ export default function Page() {
     ></Spinner>
   );
 }
+
+enum EProcess {
+  inviting,
+  settingCurrentGang,
+  hasSetCurrentGang,
+  checkingIn,
+}
+
+// const {
+//   data: gangTokenBalance,
+//   error,
+//   status,
+// } = useReadContract({
+//   //@ts-ignore
+//   address: GANGS.filter(({ id }) => id == gangId)[0]?.address,
+//   abi: parseAbi(["function balanceOf(address owner) view returns (uint256)"]),
+//   functionName: "balanceOf",
+//   args: [user?.wallet?.address as Address],
+//   chainId: 5000,
+// });

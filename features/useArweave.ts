@@ -1,10 +1,13 @@
 import { EthereumSigner } from "arbundles";
-import { Contract, WarpFactory, WriteInteractionOptions } from "warp-contracts/web";
+import {
+  Contract,
+  InteractionResult,
+  WarpFactory,
+  WriteInteractionOptions,
+} from "warp-contracts/web";
 import { atom, useAtom, useSetAtom } from "jotai";
 import { accountAtom, TAccount } from "./useAccount";
-import { ACTION_TYPES, IState } from "lag-types";
 import { Address, Hex } from "viem";
-import { useEffect } from "react";
 import { privateKeyToAddress } from "viem/accounts";
 
 const LOCAL_STORAGE_PREFIX = "lag_ar_wallet";
@@ -13,12 +16,14 @@ export const contractsAtom = atom<{ [contractAddress: string]: Contract }>({});
 export const walletAtom = atom<EthereumSigner | undefined>(undefined);
 export const walletAddressAtom = atom<Address | undefined>(undefined);
 export const isConnectingAccountAtom = atom(false);
+export const QueueAtom = atom<Record<string, Promise<any>>>({});
 
 export default function useArweave() {
   const setAccount = useSetAtom(accountAtom);
   const [wallet, setWallet] = useAtom(walletAtom);
   const [isConnectingAccount, setIsConnectingAccount] = useAtom(isConnectingAccountAtom);
   const [contracts, setContracts] = useAtom(contractsAtom);
+  const [queue, setQueue] = useAtom(QueueAtom);
 
   const connectContract = <S = unknown>(contractAddress: string) =>
     (contracts[contractAddress] as Contract<S>) ||
@@ -28,20 +33,24 @@ export default function useArweave() {
         [contractAddress]: contract,
       }),
       contract
-    ))(WarpFactory.forMainnet().contract<S>(contractAddress));
+    ))(
+      WarpFactory.forMainnet()
+        .contract<S>(contractAddress)
+        .setEvaluationOptions({ transactionsPagesPerBatch: 1 })
+    );
 
   const connectAccount = async (account: TAccount) =>
     !isConnectingAccount &&
     account.sign &&
     (setIsConnectingAccount(true),
-      (async (sk) => (
-        setWallet(new EthereumSigner(sk)),
-        _saveWalletSK(account, sk),
-        setAccount((old) => ({ ...old, arweaveAddress: privateKeyToAddress(sk as Hex) }))
-      ))(
-        getWalletSK(account) ||
+    (async (sk) => (
+      setWallet(new EthereumSigner(sk)),
+      _saveWalletSK(account, sk),
+      setAccount((old) => ({ ...old, arweaveAddress: privateKeyToAddress(sk as Hex) }))
+    ))(
+      getWalletSK(account) ||
         (await account.sign(process.env.NEXT_PUBLIC_ARWEAVE_SIGN_MSG!)).substring(0, 66)
-      ).then(() => setIsConnectingAccount(false)));
+    ).then(() => setIsConnectingAccount(false)));
 
   const getWalletSK = (account: TAccount) =>
     account.evmWallet?.address &&
@@ -54,31 +63,48 @@ export default function useArweave() {
   type TInput<P> = P extends undefined
     ? {}
     : {
-      [id in keyof P]: P[keyof P];
-    } & {
-      function: string;
-    };
+        [id in keyof P]: P[keyof P];
+      } & {
+        function: string;
+      };
 
   const read = async <S, A extends (...args: any) => any>(
     contract: Contract<S>,
     action: string,
     input?: Parameters<A>[0]
   ) =>
-    contract.viewState<TInput<typeof input>, ReturnType<A>>({ function: action, ...input });
+    (queue[_getRequestId(action, input)] as Promise<InteractionResult<S, ReturnType<A>>>) ||
+    ((request) => (setQueue({ ...queue, [_getRequestId(action, input)]: request }), request))(
+      contract
+        .viewState<TInput<typeof input>, ReturnType<A>>({ function: action, ...input })
+        .finally(((queueId) => (_removeQueueItem(queueId), null))(_getRequestId(action, input)))
+    );
 
   // const readState = async (
   //   contract: Contract
   // ): Promise<Awaited<ReturnType<Contract["readState"]>>> => contract.readState();
 
-  const write = async (
-    contract: Contract,
-    action: ACTION_TYPES,
-    input?: {},
+  const write = async <S, A extends (...args: any) => any>(
+    contract: Contract<S>,
+    action: string,
+    input?: Parameters<A>[0] | null,
     options?: WriteInteractionOptions
-  ): Promise<Awaited<ReturnType<Contract<IState>["writeInteraction"]>> | undefined> =>
+  ): Promise<Awaited<ReturnType<Contract<S>["writeInteraction"]>> | undefined> =>
     wallet
-      ? contract.connect(wallet).writeInteraction({ function: action, ...(input || {}) }, options)
+      ? contract
+          .connect(wallet)
+          .writeInteraction<typeof input>({ function: action, ...(input || {}) }, options)
       : Promise.reject("Connect Arweave account before write interactions");
+
+  const _getRequestId = (action: string, input = {}) => `${action}_${JSON.stringify(input)}`;
+
+  const _removeQueueItem = (itemId: string) =>
+    setQueue(
+      Object.keys(queue).reduce(
+        (acc, id) => ({ ...acc, ...(id != itemId && { [id]: queue[id] }) }),
+        {}
+      )
+    );
 
   return {
     isConnectingAccount,

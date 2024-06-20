@@ -14,14 +14,14 @@ import {
 const WALLET_STORAGE_KEY = "wallet_sk";
 const globalTelegram = global.Telegram;
 
-const readyAtom = atom(false)
-const inTelegramAtom = atom<boolean | undefined>(undefined)
-const cloudWalletAtom = atom<LocalAccount | undefined>(undefined)
+const readyAtom = atom(false);
+const inTelegramAtom = atom<boolean | undefined>(undefined);
+const cloudWalletAtom = atom<LocalAccount | undefined>(undefined);
 
 export default function useTelegram() {
   const [ready, setReady] = useAtom(readyAtom);
-  const [inTelegram, setInTelegram] = useAtom(inTelegramAtom)
-  const [cloudWallet, setCloudWallet] = useAtom(cloudWalletAtom)
+  const [inTelegram, setInTelegram] = useAtom(inTelegramAtom);
+  const [cloudWallet, setCloudWallet] = useAtom(cloudWalletAtom);
 
   useEffect(() => {
     setInTelegram(!!globalTelegram?.WebApp?.initData);
@@ -32,18 +32,19 @@ export default function useTelegram() {
       globalTelegram.WebApp.CloudStorage.getItem(
         WALLET_STORAGE_KEY,
         (walletSK) => (
-          walletSK && setCloudWallet(_SKToAccount(walletSK as Address)), setReady(true)
+          walletSK ? setCloudWallet(_SKToAccount(walletSK as Address)) : generateCloudWallet(),
+          setReady(true)
         )
       );
   }, [inTelegram]);
 
-  const generateCloudWallet = (cb: (error: string | null) => any) =>
+  const generateCloudWallet = (cb?: (error: string | null) => any) =>
     inTelegram &&
     ready &&
     !cloudWallet &&
     ((sk) =>
       globalTelegram.WebApp.CloudStorage.setItem(WALLET_STORAGE_KEY, sk, (error, succeeded) =>
-        succeeded ? (setCloudWallet(_SKToAccount(sk)), cb(null)) : cb(error)
+        succeeded ? (setCloudWallet(_SKToAccount(sk)), cb?.(null)) : cb?.(error)
       ))(generatePrivateKey());
 
   return {
