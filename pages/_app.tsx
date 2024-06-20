@@ -5,7 +5,6 @@ import { WagmiProvider, createConfig } from "@privy-io/wagmi";
 import { mainnet, mantle } from "wagmi/chains";
 import { http } from "wagmi";
 import { Provider as JotaiProvider } from "jotai";
-import { store } from "../state";
 import Head from "next/head";
 import { AppProps } from "next/app";
 import { ChakraProvider } from "@chakra-ui/react";
@@ -44,7 +43,7 @@ export default function Page(props: AppProps) {
       >
         <QueryClientProvider client={queryClient}>
           <WagmiProvider config={config}>
-            <JotaiProvider store={store}>
+            <JotaiProvider>
               <ChakraProvider theme={theme}>
                 <Layout {...props} />
               </ChakraProvider>
