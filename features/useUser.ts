@@ -66,9 +66,8 @@ export default function useUser() {
 
   const getCurrentGang = async (user: TUser) => user.currentGang && getGang(user);
 
-  const loadCurrentUser = () => {
+  const loadCurrentUser = () =>
     account && getUser(account).then((user) => user && (setCurrentUser(user), user));
-  };
 
   return {
     ready,
