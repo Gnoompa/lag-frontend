@@ -50,10 +50,10 @@ export default function useAccount() {
       setAccount(
         telegramCloudWallet
           ? {
-            evmWallet: telegramCloudWallet,
-            getAddress: () => telegramCloudWallet.address,
-            sign: (message) => telegramCloudWallet.signMessage({ message }),
-          }
+              evmWallet: telegramCloudWallet,
+              getAddress: () => telegramCloudWallet.address,
+              sign: (message) => telegramCloudWallet.signMessage({ message }),
+            }
           : undefined
       );
   }, [account, inTelegram, telegramReady, telegramCloudWallet]);
@@ -87,10 +87,10 @@ export default function useAccount() {
   const login = async () =>
     ready &&
     (inTelegram
-      ? connectAccount(account!).then(() => Promise.resolve())
+      ? account && connectAccount(account).then(() => Promise.resolve())
       : !authenticated || !privyWallet
-        ? privyLogin()
-        : Promise.resolve());
+      ? privyLogin()
+      : Promise.resolve());
 
   return {
     ready,

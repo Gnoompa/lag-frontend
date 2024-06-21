@@ -26,14 +26,14 @@ export default function useCheckin({ gangIds }: { gangIds: TGang["id"][] }) {
 
   const checkinTimerInterval = useRef<any>();
 
-  useDeepCompareEffectNoCheck(() => {    
-    login().then(() => currentUser?.currentGang &&
+  useDeepCompareEffectNoCheck(() => {
+    currentUser?.currentGang &&
       gangIds?.length &&
       (clearInterval(checkinTimerInterval.current),
-        (checkinTimerInterval.current = setInterval(
-          () => setCheckins(getCheckins(currentUser, gangIds)),
-          1000
-        ))));
+      (checkinTimerInterval.current = setInterval(
+        () => setCheckins(getCheckins(currentUser, gangIds)),
+        1000
+      )));
 
     return () => clearInterval(checkinTimerInterval.current);
   }, [currentUser, gangIds]);
@@ -41,14 +41,14 @@ export default function useCheckin({ gangIds }: { gangIds: TGang["id"][] }) {
   const checkin = () =>
     currentUser?.currentGang &&
     (_updateCheckin(currentUser, currentUser.currentGang, { isCheckingIn: true }),
-      storageCreate(ACTION_TYPES.CHECKIN, null)
-        .then(loadCurrentUser)
-        .finally(
-          (
-            (user: TUser) => () =>
-              user.currentGang && _updateCheckin(user, user.currentGang, { isCheckingIn: false })
-          )(currentUser)
-        ));
+    storageCreate(ACTION_TYPES.CHECKIN, null)
+      .then(loadCurrentUser)
+      .finally(
+        (
+          (user: TUser) => () =>
+            user.currentGang && _updateCheckin(user, user.currentGang, { isCheckingIn: false })
+        )(currentUser)
+      ));
 
   const getCheckins = (user: TUser, gangIds: TGang["id"][]) => ({
     [user.id]: gangIds.reduce(
@@ -73,13 +73,13 @@ export default function useCheckin({ gangIds }: { gangIds: TGang["id"][] }) {
   const _getNextCheckinTime = (user: TUser, gangId: TGang["id"]) =>
     _getLastCheckin(user, gangId)
       ? ((date): string =>
-        // @ts-ignore
-        [~~(date / 60), ~~date].reduce(
-          (a, b, i) =>
-            // @ts-ignore
-            +a ? `${a}${["h", "m", "s"][i]}` : i == 1 && !a ? `${b}s` : i == 0 ? b : a,
-          ~~(date / (60 * 60 * 1000))
-        ))(12 * 60 * 60 * 1000 - (+Date.now() - _getLastCheckin(user, gangId)))
+          // @ts-ignore
+          [~~(date / 60), ~~date].reduce(
+            (a, b, i) =>
+              // @ts-ignore
+              +a ? `${a}${["h", "m", "s"][i]}` : i == 1 && !a ? `${b}s` : i == 0 ? b : a,
+            ~~(date / (60 * 60 * 1000))
+          ))(12 * 60 * 60 * 1000 - (+Date.now() - _getLastCheckin(user, gangId)))
       : undefined;
 
   const _getLastCheckin = (user: TUser, gangId: TGang["id"]) =>
