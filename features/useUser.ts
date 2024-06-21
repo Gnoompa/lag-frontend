@@ -24,19 +24,21 @@ export default function useUser() {
     currentUser?.score[`${EActivityTypes.GANG}_${currentUser.currentGang}`];
 
   useEffect(() => {
-    console.log(account, currentUser)
-    account
-      ? (!currentUser || currentUser.id !== account.arweaveAddress) &&
-        (setIsLoading(true),
-        getUser(account).then((user) =>
-        // @ts-ignore
-          console.log(user, "LOADED USER") || user
-            ? (setCurrentUser(user), setHasRegistered(true), setIsLoading(false))
-            : (register(account).then(() => loadCurrentUser()?.then(() => setIsLoading(false))),
-              user)
-        ))
-      : ready && (setHasRegistered(false), setCurrentUser(undefined), setIsLoading(false));
+    console.log(currentUser);
+    account &&
+      (!currentUser || currentUser.id !== account.arweaveAddress) &&
+      !isRegistering &&
+      (setIsLoading(true),
+      getUser(account).then((user) =>
+        user ? setCurrentUser(user) : (register(account).then(loadCurrentUser), user)
+      ));
+
+    ready && !account && (setHasRegistered(false), setCurrentUser(undefined), setIsLoading(false));
+
+    currentUser && (setHasRegistered(true), setIsLoading(false));
   }, [account, currentUser, ready]);
+
+  console.log(isLoading);
 
   const register = async (account: TAccount, { invitedBy }: { invitedBy?: string } = {}) =>
     !isRegistering &&

@@ -67,7 +67,7 @@ export default function Page() {
 
   const joinGang = () => (setUserGang(gangId), onJoinGangModalClose());
 
-  console.log(isLoading)
+  // console.log(currentUser, "USER", isLoading, currentGangMetadata)
 
   return !isLoading && currentGangMetadata ? (
     <Flex width={"100%"} flexDirection={"column"} alignItems={"center"} padding={"1rem"}>

@@ -42,22 +42,19 @@ export default function useAccount() {
 
   const ready =
     privyReady &&
-    (inTelegram ? telegramReady && account : privyUser && privyWallet ? !!account : true);
+    (inTelegram ? telegramReady && !!account : privyUser && privyWallet ? !!account : true);
   const authenticated = inTelegram ? !!account : privyAuthenticated;
 
-  useEffect(() => {
+  useEffect(() => {   
     inTelegram &&
       telegramReady &&
+      telegramCloudWallet &&
       !account &&
-      setAccount(
-        telegramCloudWallet
-          ? {
-              evmWallet: telegramCloudWallet,
-              getAddress: () => telegramCloudWallet.address,
-              sign: (message) => telegramCloudWallet.signMessage({ message }),
-            }
-          : undefined
-      );
+      setAccount({
+        evmWallet: telegramCloudWallet,
+        getAddress: () => telegramCloudWallet.address,
+        sign: (message) => telegramCloudWallet.signMessage({ message }),
+      });
   }, [account, inTelegram, telegramReady, telegramCloudWallet]);
 
   useEffect(() => {
@@ -85,6 +82,10 @@ export default function useAccount() {
       privyWallet &&
       connectAccount(account);
   }, [account, privyReady, privyUser, privyAuthenticated, privyWallet]);
+
+  useEffect(() => {
+    inTelegram && account && connectAccount(account);
+  }, [inTelegram, account]);
 
   const login = async () =>
     ready &&

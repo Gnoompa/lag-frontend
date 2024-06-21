@@ -2,9 +2,10 @@
 
 import { atom, useAtom } from "jotai";
 import { useEffect } from "react";
-import { Address, getAddress, Hex, LocalAccount } from "viem";
+import { Address, Hex, LocalAccount } from "viem";
 import {
   generatePrivateKey,
+  privateKeyToAddress,
   signMessage,
   signTransaction,
   signTypedData,
@@ -41,7 +42,6 @@ export default function useTelegram() {
 
   const generateCloudWallet = (cb?: (error: string | null) => any) =>
     inTelegram &&
-    ready &&
     !cloudWallet &&
     ((sk) =>
       globalTelegram.WebApp.CloudStorage.setItem(WALLET_STORAGE_KEY, sk, (error, succeeded) =>
@@ -58,7 +58,7 @@ export default function useTelegram() {
 
 const _SKToAccount = (sk: Hex) =>
   toAccount({
-    address: getAddress(sk),
+    address: privateKeyToAddress(sk),
     async signMessage({ message }) {
       return signMessage({ message, privateKey: sk });
     },
