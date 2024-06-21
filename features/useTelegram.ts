@@ -31,9 +31,10 @@ export default function useTelegram() {
     inTelegram &&
       globalTelegram.WebApp.CloudStorage.getItem(
         WALLET_STORAGE_KEY,
-        (walletSK) => (
+        (error, walletSK) => (
           walletSK ? setCloudWallet(_SKToAccount(walletSK as Address)) : generateCloudWallet(),
-          setReady(true)
+          setReady(true),
+          error && console.error(error)
         )
       );
   }, [inTelegram]);
