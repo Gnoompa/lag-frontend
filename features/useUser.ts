@@ -29,6 +29,7 @@ export default function useUser() {
       ? (!currentUser || currentUser.id !== account.arweaveAddress) &&
         (setIsLoading(true),
         getUser(account).then((user) =>
+        // @ts-ignore
           console.log(user, "LOADED USER") || user
             ? (setCurrentUser(user), setHasRegistered(true), setIsLoading(false))
             : (register(account).then(() => loadCurrentUser()?.then(() => setIsLoading(false))),
