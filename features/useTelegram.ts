@@ -23,6 +23,8 @@ export default function useTelegram() {
   const [inTelegram, setInTelegram] = useAtom(inTelegramAtom);
   const [cloudWallet, setCloudWallet] = useAtom(cloudWalletAtom);
 
+  console.log(globalTelegram, inTelegram)
+
   useEffect(() => {
     setInTelegram(!!globalTelegram?.WebApp?.initData);
   }, []);
