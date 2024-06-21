@@ -24,11 +24,12 @@ export default function useUser() {
     currentUser?.score[`${EActivityTypes.GANG}_${currentUser.currentGang}`];
 
   useEffect(() => {
+    console.log(account, currentUser)
     account
       ? (!currentUser || currentUser.id !== account.arweaveAddress) &&
         (setIsLoading(true),
         getUser(account).then((user) =>
-          user
+          console.log(user, "LOADED USER") || user
             ? (setCurrentUser(user), setHasRegistered(true), setIsLoading(false))
             : (register(account).then(() => loadCurrentUser()?.then(() => setIsLoading(false))),
               user)
