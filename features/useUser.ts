@@ -12,6 +12,7 @@ export default function useUser() {
   const { create: storageCreate, read: storageRead } = useStorage();
   const { account, login, authenticated, ready } = useAccount();
 
+  const [isLoading, setIsLoading] = useState(false);
   const [hasRegistered, setHasRegistered] = useAtom(hasRegisteredAtom);
   const [isRegistering, setIsRegistering] = useAtom(isRegisteringAtom);
   const [currentUser, setCurrentUser] = useAtom(currentUserAtom);
@@ -25,11 +26,15 @@ export default function useUser() {
   useEffect(() => {
     account
       ? (!currentUser || currentUser.id !== account.arweaveAddress) &&
-        getUser(account).then((user) =>
-          user
-            ? (setCurrentUser(user), setHasRegistered(true))
-            : (register(account).then(() => loadCurrentUser()), user)
-        )
+        (setIsLoading(true),
+        getUser(account).then(
+          (user) => (
+            user
+              ? (setCurrentUser(user), setHasRegistered(true))
+              : (register(account).then(() => loadCurrentUser()), user),
+            setIsLoading(false)
+          )
+        ))
       : (setHasRegistered(false), setCurrentUser(undefined));
   }, [account, currentUser]);
 
@@ -71,6 +76,7 @@ export default function useUser() {
 
   return {
     ready,
+    isLoading,
     login,
     register,
     authenticated,
