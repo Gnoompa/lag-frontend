@@ -1,15 +1,13 @@
 import useStorage from "./useStorage";
 import { ACTION_TYPES, TGang, TUser } from "lag-types";
-import useUser, { currentUserAtom } from "./useUser";
-import { useAtom } from "jotai";
-import { useEffect, useRef, useState } from "react";
+import useUser from "./useUser";
+import { useRef, useState } from "react";
 import { merge } from "lodash";
+import { useDeepCompareEffectNoCheck } from "use-deep-compare-effect";
 
 export default function useCheckin({ gangIds }: { gangIds: TGang["id"][] }) {
-  const [currentUser] = useAtom(currentUserAtom);
-
   const { create: storageCreate } = useStorage();
-  const { loadCurrentUser } = useUser();
+  const { currentUser, loadCurrentUser, login } = useUser();
 
   const [checkins, setCheckins] = useState<{
     [userId: TUser["id"]]: {
@@ -21,21 +19,21 @@ export default function useCheckin({ gangIds }: { gangIds: TGang["id"][] }) {
         nextCheckinTime: string | undefined;
       };
     };
-  }>({});
+  }>();
 
-  const currentCheckin =
-    currentUser && checkins[currentUser.id]?.[currentUser.currentGang || ""]
+  const ready = currentUser && checkins;
+  const currentCheckin = currentUser && checkins?.[currentUser.id]?.[currentUser.currentGang || ""];
 
   const checkinTimerInterval = useRef<any>();
 
-  useEffect(() => {
-    currentUser?.currentGang &&
+  useDeepCompareEffectNoCheck(() => {    
+    login().then(() => currentUser?.currentGang &&
       gangIds?.length &&
       (clearInterval(checkinTimerInterval.current),
         (checkinTimerInterval.current = setInterval(
           () => setCheckins(getCheckins(currentUser, gangIds)),
           1000
-        )));
+        ))));
 
     return () => clearInterval(checkinTimerInterval.current);
   }, [currentUser, gangIds]);
@@ -57,18 +55,18 @@ export default function useCheckin({ gangIds }: { gangIds: TGang["id"][] }) {
       (acc, gangId) => ({
         ...acc,
         [gangId]: {
-          lastCheckin: user.checkin[gangId].lastTimestamp,
-          checkinAmount: user.checkin[gangId].value,
+          lastCheckin: user.checkin[gangId]?.lastTimestamp,
+          checkinAmount: user.checkin[gangId]?.value,
           hasCheckedIn: _getHasCheckedIn(user, gangId),
           nextCheckinTime: _getNextCheckinTime(user, gangId),
         },
       }),
-      {} as (typeof checkins)[""]
+      {}
     ),
   });
 
   const _getHasCheckedIn = (user: TUser, gangId: TGang["id"]) =>
-    user.checkin[gangId].lastTimestamp
+    user.checkin[gangId]?.lastTimestamp
       ? Date.now() - user.checkin[gangId].lastTimestamp < 12 * 60 * 60 * 1000 - 1
       : false;
 
@@ -91,6 +89,7 @@ export default function useCheckin({ gangIds }: { gangIds: TGang["id"][] }) {
     setCheckins((old) => merge(old, { [user.id]: { [gangId!]: updates } }));
 
   return {
+    ready,
     checkin,
     checkins,
     currentCheckin,

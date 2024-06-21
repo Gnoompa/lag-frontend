@@ -4,7 +4,7 @@ import { Button, Container, Flex, Image, Text } from "@chakra-ui/react";
 import useRouter, { ERouterPaths } from "@/features/useRouter";
 import { motion, AnimatePresence } from "framer-motion";
 import useGangs from "@/features/useGangs";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { sortBy } from "lodash";
 import { EActivityTypes } from "lag-types";
 
@@ -12,10 +12,6 @@ export default function Page() {
   const { router, push: routerPush } = useRouter();
 
   const { gangs, gangMetadata, getScore: getGangScore } = useGangs({ fetch: true });
-
-  useEffect(() => {
-    console.log(router);
-  }, [router]);
 
   const sortedGangs = useMemo(
     () => sortBy(gangs, (gang) => -gang?.score[EActivityTypes.GANG]),

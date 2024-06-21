@@ -42,8 +42,9 @@ export default function Page() {
     currentUserScore,
     setGang: setUserGang,
     isWriting: isWritingUser,
+    loadCurrentUser,
   } = useUser();
-  const { checkin, currentCheckin } = useCheckin({ gangIds: [gangId] });
+  const { ready: checkinReady, checkin, currentCheckin } = useCheckin({ gangIds: [gangId] });
   const { copyInviteLink, hasCopiedInviteLink } = useInvite();
   const { gangMetadata, getGangImageUrl, gangs } = useGangs({ gangIds: [gangId] });
   const currentGang = gangs?.[gangId];
@@ -55,14 +56,17 @@ export default function Page() {
     onClose: onJoinGangModalClose,
   } = useDisclosure();
 
-  const onRaidButtonClick = () => login() && routerPush(ERouterPaths.RAID_OPPONENT_SELECTION);
+  const onRaidButtonClick = () =>
+    login().then(() => routerPush(ERouterPaths.RAID_OPPONENT_SELECTION));
 
   const onJoinGangButtonClick = () =>
-    currentGang?.id === gangId ? joinGang() : onJoinGangModalOpen();
+    currentUser?.currentGang && currentUser.currentGang !== gangId
+      ? onJoinGangModalOpen()
+      : joinGang();
 
-  const joinGang = () => setUserGang(gangId);
+  const joinGang = () => (setUserGang(gangId), onJoinGangModalClose());
 
-  return currentGang && currentGangMetadata ? (
+  return currentUser && currentGang && currentGangMetadata ? (
     <Flex width={"100%"} flexDirection={"column"} alignItems={"center"} padding={"1rem"}>
       <Container
         h={"20vh"}
@@ -189,15 +193,15 @@ export default function Page() {
             </Flex>
           </Flex>
         </Flex> */}
-        {currentGang.id === gangId ? (
+        {currentUser?.currentGang === gangId ? (
           <Flex flexDir={"column"} gap={"1rem"}>
             <Flex gap={"1rem"}>
               <ScaleFade delay={0.1} in style={{ display: "flex", flex: 0.33 }}>
                 <Button
                   onClick={checkin}
                   variant={"main"}
-                  isDisabled={currentCheckin?.isCheckingIn}
-                  isLoading={!currentCheckin || currentCheckin?.isCheckingIn}
+                  isDisabled={currentCheckin?.hasCheckedIn}
+                  isLoading={!checkinReady || currentCheckin?.isCheckingIn}
                   flex={1}
                   flexDir={"column"}
                   gap={"1rem"}

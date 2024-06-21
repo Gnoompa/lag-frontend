@@ -24,11 +24,12 @@ export default function useUser() {
 
   useEffect(() => {
     account
-      ? !currentUser ||
-      (currentUser.id !== account.arweaveAddress &&
+      ? (!currentUser || currentUser.id !== account.arweaveAddress) &&
         getUser(account).then((user) =>
-          user ? (setCurrentUser(user), setHasRegistered(true)) : register(account)
-        ))
+          user
+            ? (setCurrentUser(user), setHasRegistered(true))
+            : (register(account).then(() => loadCurrentUser()), user)
+        )
       : (setHasRegistered(false), setCurrentUser(undefined));
   }, [account, currentUser]);
 
@@ -36,13 +37,14 @@ export default function useUser() {
     !isRegistering &&
     account.evmWallet?.address &&
     (setIsRegistering(true),
-      setIsWriting(true),
-      storageCreate(ACTION_TYPES.CREATE_USER, {
-        evmAddress: account.evmWallet.address,
-        ...(invitedBy && { invitedBy }),
-      })
-        .then(() => setHasRegistered(true))
-        .finally(() => (setIsRegistering(false), setIsWriting(true))));
+    setIsWriting(true),
+    storageCreate(ACTION_TYPES.CREATE_USER, {
+      evmAddress: account.evmWallet.address,
+      ...(invitedBy && { invitedBy }),
+    })
+      .then(() => setHasRegistered(true))
+      .catch(console.error)
+      .finally(() => (setIsRegistering(false), setIsWriting(true))));
 
   const getUser = async (account: TAccount) =>
     account.arweaveAddress &&
@@ -54,16 +56,19 @@ export default function useUser() {
   const setGang = async (gangId: TGang["id"]) =>
     currentUser &&
     (setIsWriting(true),
-      storageCreate(ACTION_TYPES.SET_USER_GANG, {
-        gang: gangId,
-      }).finally(() => setIsWriting(false)));
+    storageCreate(ACTION_TYPES.SET_USER_GANG, {
+      gang: gangId,
+    })
+      .then(loadCurrentUser)
+      .finally(() => setIsWriting(false)));
 
   const getGang = async (user: TUser) => user.currentGang;
 
   const getCurrentGang = async (user: TUser) => user.currentGang && getGang(user);
 
-  const loadCurrentUser = () =>
+  const loadCurrentUser = () => {
     account && getUser(account).then((user) => user && (setCurrentUser(user), user));
+  };
 
   return {
     ready,

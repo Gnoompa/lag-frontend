@@ -17,6 +17,7 @@ export const walletAtom = atom<EthereumSigner | undefined>(undefined);
 export const walletAddressAtom = atom<Address | undefined>(undefined);
 export const isConnectingAccountAtom = atom(false);
 export const QueueAtom = atom<Record<string, Promise<any>>>({});
+export const stateCacheAtom = atom<{} | undefined>(undefined);
 
 export default function useArweave() {
   const setAccount = useSetAtom(accountAtom);
@@ -33,23 +34,30 @@ export default function useArweave() {
         [contractAddress]: contract,
       }),
       contract
-    ))(
-      WarpFactory.forMainnet()
-        .contract<S>(contractAddress)
-        .setEvaluationOptions({ transactionsPagesPerBatch: 1 })
-    );
+    ))(WarpFactory.forMainnet().contract<S>(contractAddress));
 
   const connectAccount = async (account: TAccount) =>
     !isConnectingAccount &&
     account.sign &&
     (setIsConnectingAccount(true),
-    (async (sk) => (
-      setWallet(new EthereumSigner(sk)),
+    (async (sk) =>
+      sk &&
+      (setWallet(
+        // @ts-ignore
+        ((wallet) => ((wallet.getAddress = () => privateKeyToAddress(sk as Hex)), wallet))(
+          new EthereumSigner(sk)
+        )
+      ),
       _saveWalletSK(account, sk),
-      setAccount((old) => ({ ...old, arweaveAddress: privateKeyToAddress(sk as Hex) }))
-    ))(
+      setAccount((old) => ({
+        ...old,
+        arweaveAddress: privateKeyToAddress(sk as Hex),
+        getAddress: () => privateKeyToAddress(sk as Hex),
+      }))))(
       getWalletSK(account) ||
-        (await account.sign(process.env.NEXT_PUBLIC_ARWEAVE_SIGN_MSG!)).substring(0, 66)
+        (
+          await account.sign(process.env.NEXT_PUBLIC_ARWEAVE_SIGN_MSG!).catch(() => undefined)
+        )?.substring(0, 66)
     ).then(() => setIsConnectingAccount(false)));
 
   const getWalletSK = (account: TAccount) =>
@@ -77,12 +85,12 @@ export default function useArweave() {
     ((request) => (setQueue({ ...queue, [_getRequestId(action, input)]: request }), request))(
       contract
         .viewState<TInput<typeof input>, ReturnType<A>>({ function: action, ...input })
-        .finally(((queueId) => (_removeQueueItem(queueId), null))(_getRequestId(action, input)))
+        .finally(
+          ((queueId) => () => (_removeQueueItem(queueId), null))(_getRequestId(action, input))
+        )
     );
 
-  // const readState = async (
-  //   contract: Contract
-  // ): Promise<Awaited<ReturnType<Contract["readState"]>>> => contract.readState();
+  const readState = async <S>(contract: Contract<S>) => contract.readState();
 
   const write = async <S, A extends (...args: any) => any>(
     contract: Contract<S>,
@@ -99,7 +107,7 @@ export default function useArweave() {
   const _getRequestId = (action: string, input = {}) => `${action}_${JSON.stringify(input)}`;
 
   const _removeQueueItem = (itemId: string) =>
-    setQueue(
+    setQueue((queue) =>
       Object.keys(queue).reduce(
         (acc, id) => ({ ...acc, ...(id != itemId && { [id]: queue[id] }) }),
         {}
