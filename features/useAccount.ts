@@ -40,7 +40,9 @@ export default function useAccount() {
 
   const [account, setAccount] = useAtom(accountAtom);
 
-  const ready = privyReady && (inTelegram ? telegramReady && account : true);
+  const ready =
+    privyReady &&
+    (inTelegram ? telegramReady && account : privyUser && privyWallet ? !!account : true);
   const authenticated = inTelegram ? !!account : privyAuthenticated;
 
   useEffect(() => {

@@ -12,7 +12,7 @@ export default function useUser() {
   const { create: storageCreate, read: storageRead } = useStorage();
   const { account, login, authenticated, ready } = useAccount();
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [hasRegistered, setHasRegistered] = useAtom(hasRegisteredAtom);
   const [isRegistering, setIsRegistering] = useAtom(isRegisteringAtom);
   const [currentUser, setCurrentUser] = useAtom(currentUserAtom);
@@ -27,16 +27,14 @@ export default function useUser() {
     account
       ? (!currentUser || currentUser.id !== account.arweaveAddress) &&
         (setIsLoading(true),
-        getUser(account).then(
-          (user) => (
-            user
-              ? (setCurrentUser(user), setHasRegistered(true))
-              : (register(account).then(() => loadCurrentUser()), user),
-            setIsLoading(false)
-          )
+        getUser(account).then((user) =>
+          user
+            ? (setCurrentUser(user), setHasRegistered(true), setIsLoading(false))
+            : (register(account).then(() => loadCurrentUser()?.then(() => setIsLoading(false))),
+              user)
         ))
-      : (setHasRegistered(false), setCurrentUser(undefined));
-  }, [account, currentUser]);
+      : ready && (setHasRegistered(false), setCurrentUser(undefined), setIsLoading(false));
+  }, [account, currentUser, ready]);
 
   const register = async (account: TAccount, { invitedBy }: { invitedBy?: string } = {}) =>
     !isRegistering &&

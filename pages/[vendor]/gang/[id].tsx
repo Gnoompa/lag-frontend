@@ -35,7 +35,8 @@ export default function Page() {
   const gangId = router.query.id as string;
 
   const {
-    isLoading: isUserLoading,
+    ready,
+    isLoading,
     login,
     authenticated,
     currentUser,
@@ -66,7 +67,9 @@ export default function Page() {
 
   const joinGang = () => (setUserGang(gangId), onJoinGangModalClose());
 
-  return !isUserLoading && currentGang && currentGangMetadata ? (
+  console.log(isLoading)
+
+  return !isLoading && currentGangMetadata ? (
     <Flex width={"100%"} flexDirection={"column"} alignItems={"center"} padding={"1rem"}>
       <Container
         h={"20vh"}
