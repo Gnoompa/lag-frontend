@@ -1,5 +1,3 @@
-"use client";
-
 import { Button, Container, Flex, Image, Text } from "@chakra-ui/react";
 import useRouter, { ERouterPaths } from "@/features/useRouter";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,7 +7,7 @@ import { sortBy } from "lodash";
 import { EActivityTypes } from "lag-types";
 
 export default function Page() {
-  const { router, push: routerPush } = useRouter();
+  const { push: routerPush } = useRouter();
 
   const { gangs, gangMetadata, getScore: getGangScore } = useGangs({ fetch: true });
 
@@ -81,7 +79,7 @@ export default function Page() {
           px={"2rem"}
           zIndex={"99999"}
         >
-          LAUNCH GANG
+          LAUNCH TOKEN
         </Button>
       </Flex>
     </Flex>

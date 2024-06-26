@@ -9,6 +9,9 @@ import { atom, useAtom, useSetAtom } from "jotai";
 import { accountAtom, TAccount } from "./useAccount";
 import { Address, Hex } from "viem";
 import { privateKeyToAddress } from "viem/accounts";
+import { isEmpty } from "lodash";
+import { useAtomCallback } from "jotai/utils";
+import { useCallback } from "react";
 
 const LOCAL_STORAGE_PREFIX = "lag_ar_wallet";
 
@@ -16,15 +19,18 @@ export const contractsAtom = atom<{ [contractAddress: string]: Contract }>({});
 export const walletAtom = atom<EthereumSigner | undefined>(undefined);
 export const walletAddressAtom = atom<Address | undefined>(undefined);
 export const isConnectingAccountAtom = atom(false);
-export const QueueAtom = atom<Record<string, Promise<any>>>({});
-export const stateCacheAtom = atom<{} | undefined>(undefined);
+export const queueAtom = atom<Record<string, Promise<any>>>({});
+export const coldStartAtom = atom(true);
 
 export default function useArweave() {
   const setAccount = useSetAtom(accountAtom);
   const [wallet, setWallet] = useAtom(walletAtom);
   const [isConnectingAccount, setIsConnectingAccount] = useAtom(isConnectingAccountAtom);
   const [contracts, setContracts] = useAtom(contractsAtom);
-  const [queue, setQueue] = useAtom(QueueAtom);
+  const [coldStart, setColdStart] = useAtom(coldStartAtom);
+  const [queue, setQueue] = useAtom(queueAtom);
+
+  const getQueue = useAtomCallback(useCallback((get) => get(queueAtom), []));
 
   const connectContract = <S = unknown>(contractAddress: string) =>
     (contracts[contractAddress] as Contract<S>) ||
@@ -81,16 +87,21 @@ export default function useArweave() {
     action: string,
     input?: Parameters<A>[0]
   ) =>
-    (queue[_getRequestId(action, input)] as Promise<InteractionResult<S, ReturnType<A>>>) ||
-    ((request) => (setQueue({ ...queue, [_getRequestId(action, input)]: request }), request))(
-      contract
-        .viewState<TInput<typeof input>, ReturnType<A>>({ function: action, ...input })
-        .finally(
-          ((queueId) => () => (_removeQueueItem(queueId), null))(_getRequestId(action, input))
-        )
+    (getQueue()[_getRequestId(action, input)] as Promise<InteractionResult<S, ReturnType<A>>>) ||
+    ((request) => (setQueue({ ...getQueue(), [_getRequestId(action, input)]: request }), request))(
+      ((request) =>
+        coldStart && !isEmpty(getQueue())
+          ? new Promise((resolve) =>
+              Object.values(getQueue())[0]?.then(() => (setColdStart(false), resolve(request())))
+            )
+          : request())(() =>
+        contract
+          .viewState<TInput<typeof input>, ReturnType<A>>({ function: action, ...input })
+          .finally(
+            ((queueId) => () => (_removeQueueItem(queueId), null))(_getRequestId(action, input))
+          )
+      )
     );
-
-  const readState = async <S>(contract: Contract<S>) => contract.readState();
 
   const write = async <S, A extends (...args: any) => any>(
     contract: Contract<S>,

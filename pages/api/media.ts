@@ -50,5 +50,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             console.log(e);
             res.status(500).send("Server Error");
         }
+    } else {
+        res.status(404).send("only POST");
     }
 }

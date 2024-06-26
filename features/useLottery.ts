@@ -1,11 +1,11 @@
 import useStorage from "./useStorage";
-import { ACTION_TYPES, IState, TGang, TLotteryTicket } from "lag-types";
+import { ACTION_TYPES, IState, TLotteryTicket } from "lag-types";
 import useUser, { currentUserAtom } from "./useUser";
 import { useAtom } from "jotai";
 import { useEffect, useRef, useState } from "react";
 import { filter, last } from "lodash";
 
-export default function useLottery({ gangId }: { gangId?: TGang["id"] } = {}) {
+export default function useLottery() {
   const [currentUser] = useAtom(currentUserAtom);
 
   const { create: storageCreate, read: storageRead } = useStorage();
@@ -54,22 +54,22 @@ export default function useLottery({ gangId }: { gangId?: TGang["id"] } = {}) {
     storageCreate(ACTION_TYPES.DRAW_LOTTERY, null, { vrf: true })
       .then(() =>
         loadCurrentUser()?.then(
-          (user) => user && setLastUsedTicketInSession(last(Object.values(user?.lotteryTickets?.used?.[user.currentGang!])))
+          (user) =>
+            user &&
+            setLastUsedTicketInSession(
+              last(Object.values(user?.lotteryTickets?.used?.[user.currentGang!]))
+            )
         )
       )
-      .finally(() => setTimeout(() => setIsUsingTicket(true), 1000))
+      .finally(() => setIsUsingTicket(false))
   );
 
   const redeemTicket = (ticketId: number) => (
     setIsRedeemingTicket(true),
     storageCreate(ACTION_TYPES.REDEEM_LOTTERY, { ticketId })
       .then(loadCurrentUser)
-      .finally(() => setTimeout(() => setIsRedeemingTicket(true), 1000))
+      .finally(() => setIsRedeemingTicket(false))
   );
-
-  // const _getHasUsedFreeTicket = (user: TUser, gangId: TGang["id"]) =>
-  //   _getLastTicketUsed(user, gangId) &&
-  //   Date.now() - _getLastTicketUsed(user, gangId) < 12 * 60 * 60 * 1000 - 1;
 
   const _getNextFreeTicketCountdown = (lastUsedTimestamp: number) =>
     setFreeTicketCountdown(

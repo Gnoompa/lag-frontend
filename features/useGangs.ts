@@ -5,11 +5,14 @@ import { useEffect, useState } from "react";
 import { useAtomValue } from "jotai";
 import { currentUserAtom } from "./useUser";
 import { useDeepCompareEffectNoCheck } from "use-deep-compare-effect";
+import useMedia from "./useMedia";
 
-export default function useGangs(options: { gangIds?: TGang["id"][]; fetch?: boolean }) {
+export default function useGangs(options?: { gangIds?: TGang["id"][]; fetch?: boolean }) {
   const currentUser = useAtomValue(currentUserAtom);
   const { create: storageCreate, read: storageRead } = useStorage();
+  const { uploadMetadata } = useMedia();
 
+  const [isCreatingGang, setIsCreatingGang] = useState(false);
   const [gangs, setGangs] = useState<Record<TGang["id"], TGang> | undefined>();
   const [gangMetadata, setGangMetadata] = useState<{
     [gangId: TGang["id"]]: TGangMetadata;
@@ -41,10 +44,23 @@ export default function useGangs(options: { gangIds?: TGang["id"][]; fetch?: boo
           )
     );
 
-  const createGang = (gang: TGang) =>
-    storageCreate(ACTION_TYPES.CREATE_GANG, {
-      gang,
-    });
+  const createGang = (
+    gangMetadata: TGangMetadata,
+    gangImage: Parameters<typeof uploadMetadata>[0]
+  ) =>
+    validateGagnMetadata(gangMetadata) &&
+    (setIsCreatingGang(true),
+    uploadMetadata(gangImage, gangMetadata).then((metadataHash) =>
+      storageCreate(ACTION_TYPES.CREATE_GANG, {
+        gang: {
+          endpointId: 1,
+          metadata: metadataHash,
+        },
+      }).finally(() => setIsCreatingGang(false))
+    ));
+
+  const validateGagnMetadata = (gangMetadata: Partial<TGangMetadata>) =>
+    gangMetadata.name && gangMetadata.ticker && gangMetadata.about;
 
   const getGangs = async (gangIds?: TGang["id"][]) =>
     storageRead(ACTION_TYPES.GET_GANGS).then(
@@ -68,6 +84,7 @@ export default function useGangs(options: { gangIds?: TGang["id"][]; fetch?: boo
 
   return {
     createGang,
+    isCreatingGang,
     getGangs,
     getScore,
     gangs,
@@ -76,5 +93,6 @@ export default function useGangs(options: { gangIds?: TGang["id"][]; fetch?: boo
     fetchGangsMetadata,
     getGangImageUrl,
     gangMetadata,
+    validateGagnMetadata,
   };
 }

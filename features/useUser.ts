@@ -3,12 +3,13 @@ import { useEffect, useState } from "react";
 import useAccount, { TAccount } from "./useAccount";
 import useStorage from "./useStorage";
 import { ACTION_TYPES, EActivityTypes, TGang, TUser } from "lag-types";
+import { useDeepCompareEffectNoCheck } from "use-deep-compare-effect";
 
 export const currentUserAtom = atom<TUser | undefined>(undefined);
 export const isRegisteringAtom = atom(false);
 export const hasRegisteredAtom = atom<boolean | undefined>(undefined);
 
-export default function useUser() {
+export default function useUser(options?: { autoLogin: boolean }) {
   const { create: storageCreate, read: storageRead } = useStorage();
   const { account, login, authenticated, ready } = useAccount();
 
@@ -22,6 +23,10 @@ export default function useUser() {
   const currentUserScore =
     currentUser?.currentGang &&
     currentUser?.score[`${EActivityTypes.GANG}_${currentUser.currentGang}`];
+
+  useDeepCompareEffectNoCheck(() => {
+    options?.autoLogin && ready && login();
+  }, [options, ready]);
 
   useEffect(() => {
     console.log(currentUser);
@@ -37,8 +42,6 @@ export default function useUser() {
 
     currentUser && (setHasRegistered(true), setIsLoading(false));
   }, [account, currentUser, ready]);
-
-  console.log(isLoading);
 
   const register = async (account: TAccount, { invitedBy }: { invitedBy?: string } = {}) =>
     !isRegistering &&

@@ -2,7 +2,7 @@
 const nextConfig = {
     // swcMinify: false,
     distDir: "./build",
-    output: 'export',
+    // output: 'export',
     reactStrictMode: true,
     // webpack: (config, { buildId, dev }) => {
     //     config.resolve.symlinks = false

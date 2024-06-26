@@ -361,7 +361,7 @@ export default function Page() {
       <Flex
         w={"100%"}
         alignItems={"center"}
-        justifyContent={"space-between"}
+        justifyContent={"center"}
         px={"2rem"}
         pos={"fixed"}
         bottom={"1rem"}

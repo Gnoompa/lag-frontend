@@ -5,13 +5,17 @@ import { Button, Flex, IconButton, ScaleFade, Text, useDisclosure } from "@chakr
 
 import LotteryTicketIcon from "@/components/icons/Ticket";
 import LotteryTicketsIcon from "@/components/icons/Tickets";
-import { CloseIcon, RepeatClockIcon } from "@chakra-ui/icons";
+import { ChevronLeftIcon, CloseIcon, RepeatClockIcon } from "@chakra-ui/icons";
 import LotteryTicketTemplate from "@/components/icons/TicketTemplate";
 import useLottery from "@/features/useLottery";
 import { isEmpty, size } from "lodash";
 import { TLotteryTicket } from "lag-types";
+import useRouter, { ERouterPaths } from "@/features/useRouter";
+import useUser from "@/features/useUser";
 
 export default function Page() {
+  const { push: routePush } = useRouter();
+
   const {
     unusedTickets,
     usedTickets,
@@ -26,6 +30,8 @@ export default function Page() {
     lastUsedTicketInSession,
   } = useLottery();
 
+  const { currentUser } = useUser();
+
   const [lastUsedTicket, setLastUsedTicket] = useState<TLotteryTicket>();
 
   const hasLastUsedTicketWon =
@@ -37,7 +43,7 @@ export default function Page() {
     lastUsedTicketInSession &&
       (setLastUsedTicket(lastUsedTicketInSession),
       !getHasTicketWon(lastUsedTicketInSession) &&
-        setTimeout(() => setLastUsedTicket(undefined), 1500));
+        setTimeout(() => setLastUsedTicket(undefined), 2000));
   }, [lastUsedTicketInSession]);
 
   const {
@@ -68,7 +74,7 @@ export default function Page() {
       <Flex flexDir={"column"} justifyContent={"center"} align={"center"} gap={"2rem"}>
         <Flex flexDir={"column"} justify={"center"} align={"center"} gap={".25rem"}>
           <Text fontSize={"1.25rem"} fontWeight={"bold"}>
-            {unusedTickets} TICKET(S)
+            {unusedTickets !== undefined ? `${unusedTickets} TICKET(S)` : ""}
           </Text>
 
           <ScaleFade in={!!freeTicketCountdown}>
@@ -91,7 +97,7 @@ export default function Page() {
         </ScaleFade>
         <Button
           onClick={useTicket}
-          isDisabled={!unusedTickets}
+          isDisabled={!unusedTickets || hasLastUsedTicketWon === false}
           isLoading={isUsingTicket}
           variant={"accent"}
         >
@@ -170,21 +176,13 @@ export default function Page() {
           bottom={"1rem"}
           justify={"space-between"}
         >
-          {/* <ScaleFade in={!!currentGangId} style={{ width: "2rem" }}>
-            <IconButton
-              onClick={() =>
-                router.push({
-                  // @ts-ignore
-                  pathname: `/[vendor]/gang/${currentGangId}`,
-                  query: { vendor: router.query.vendor || "main" },
-                })
-              }
-              aria-label="back"
-              icon={<ChevronLeftIcon boxSize={10}></ChevronLeftIcon>}
-              variant={"unstyled"}
-              color={"fg"}
-            />
-          </ScaleFade> */}
+          <IconButton
+            onClick={() => routePush(ERouterPaths.GANG, currentUser?.currentGang)}
+            aria-label="back"
+            icon={<ChevronLeftIcon boxSize={10} />}
+            variant={"unstyled"}
+            color={"fg"}
+          />
           <Button
             onClick={onOpenUsedTickets}
             variant={"unstyled"}
@@ -224,7 +222,7 @@ export default function Page() {
           mb={"4rem"}
         >
           {!!loosingTickets?.length && <Text>BLANKS ({loosingTickets.length})</Text>}
-          {winningTickets?.map((ticket, key) => (
+          {winningTickets?.filter((ticket) => !ticket.redeemedAt).map((ticket, key) => (
             <Flex w={"80%"} pos={"relative"} justify={"center"} key={key}>
               <Text
                 pos={"absolute"}
@@ -251,9 +249,9 @@ export default function Page() {
                 >
                   Redeem
                 </Button>
-                <Button isDisabled bg={"black"}>
+                {/* <Button isDisabled bg={"black"}>
                   Mint (soon)
-                </Button>
+                </Button> */}
               </Flex>
               <LotteryTicketTemplate {...getLotteryTicketResult(ticket.result)} />
             </Flex>
@@ -304,7 +302,9 @@ export default function Page() {
               >
                 <Button
                   bg={"black"}
-                  onClick={() => redeemTicket(lastUsedTicket.timestamp)}
+                  onClick={() =>
+                    redeemTicket(lastUsedTicket.timestamp).then(() => setLastUsedTicket(undefined))
+                  }
                   isLoading={isRedeemingTicket}
                 >
                   Redeem
